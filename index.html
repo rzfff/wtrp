@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WT 研发点计算器</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">WT<span>RP</span> 研发点计算器</div>
+  <div class="ver" id="verBadge">…</div>
+</header>
+
+<nav class="tabs" id="countryTabs"></nav>
+<nav class="tabs sub" id="branchTabs"></nav>
+
+<div class="toolbar">
+  <div class="legend">
+    <span class="lg tt"></span>科技树
+    <span class="lg prem"></span>高级(金币)
+    <span class="lg pack"></span>礼包
+    <span class="lg mp"></span>市场
+    <span class="lg sq"></span>中队
+  </div>
+  <div class="spacer"></div>
+  <label class="field">有效RP/场 <input type="number" id="effRP" min="1" step="100"> </label>
+  <span class="presets">
+    <button data-v="2000">F2P</button><button data-v="8000">高账</button><button data-v="18000">高账+护身符</button>
+  </span>
+  <label class="field">每场分钟 <input type="number" id="mins" min="1" step="1"></label>
+</div>
+
+<main class="wrap">
+  <section class="treebox" id="treeBox">
+    <div class="treecols" id="treeCols"></div>
+  </section>
+  <aside class="panel" id="panel"></aside>
+</main>
+
+<footer class="foot">
+  数据与图片:<a href="https://github.com/gszabi99/War-Thunder-Datamine" target="_blank" rel="noopener noreferrer">War-Thunder-Datamine</a>(gszabi99)· 经本站 <a href="/wtapi/">/wtapi/</a> 静态接口 · 载具名与图片 © Gaijin Localization<br>
+  本页为原创实现(MIT),公式依据游戏文件与官方 Wiki 核验;Not affiliated with Gaijin Entertainment.
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
