@@ -1,90 +1,808 @@
-/* WT 研发点计算器(原创实现,MIT)— 与 /wtapi/ 统计面板同族深色 HUD 风格 */
-:root{
-  --bg1:#10141b;--bg2:#0b0e13;--card:#161b24;--line:#252c3a;--ink:#d7dde6;--sub:#8b949e;
-  --amber:#e6a817;--blue:#58a6ff;--green:#3fb950;--orange:#f78166;--red:#da3633;
+/*
+* Prefixed by https://autoprefixer.github.io
+* PostCSS: v8.3.6,
+* Autoprefixer: v10.3.1
+* Browsers: last 4 version
+*/
+
+:root {
+	--main_bg: rgb(48, 48, 48);
+	--text_col: white;
+
+	--tech_tree_bg: rgb(36, 46, 51);
 }
-*{box-sizing:border-box}
-html{background:var(--bg2)}
-body{margin:0;font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;color:var(--ink);
-  background:linear-gradient(180deg,var(--bg1),var(--bg2));min-height:100vh;font-size:14px}
-a{color:var(--blue);text-decoration:none}
-/* 顶栏 */
-.top{display:flex;align-items:center;gap:14px;padding:10px 18px;background:linear-gradient(180deg,#1c2129,#141821);
-  box-shadow:0 2px 12px rgba(0,0,0,.4);position:sticky;top:0;z-index:50}
-.brand{font-size:19px;font-weight:800;letter-spacing:.5px}
-.brand span{color:var(--amber)}
-.ver{margin-left:auto;font-size:12px;color:var(--sub);border:1px solid var(--line);border-radius:8px;padding:4px 10px}
-/* 页签 */
-.tabs{display:flex;flex-wrap:wrap;gap:6px;padding:10px 18px 0}
-.tabs.sub{padding-top:6px;padding-bottom:8px;border-bottom:1px solid var(--line)}
-.tab{background:rgba(230,168,23,.06);border:1px solid rgba(230,168,23,.3);color:var(--amber);border-radius:8px;
-  padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
-.tab:hover{background:rgba(230,168,23,.14)}
-.tab.active{background:var(--amber);color:#14181f;border-color:var(--amber)}
-/* 工具条 */
-.toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:10px 16px;padding:10px 18px;color:var(--sub);font-size:12px}
-.spacer{flex:1}
-.legend .lg{display:inline-block;width:10px;height:10px;border-radius:3px;margin:0 4px 0 10px;vertical-align:-1px;border:1px solid var(--line)}
-.lg.tt{background:#39414e}.lg.prem{background:var(--amber)}.lg.pack{background:var(--orange)}
-.lg.mp{background:var(--blue)}.lg.sq{background:var(--green)}
-.field{display:inline-flex;align-items:center;gap:6px}
-.field input{width:86px;background:#0e131b;border:1px solid var(--line);color:var(--ink);border-radius:8px;
-  padding:6px 8px;font-size:13px;font-family:inherit}
-.field input:focus{outline:none;border-color:var(--amber)}
-.presets button{background:#0e131b;border:1px solid var(--line);color:var(--sub);border-radius:7px;padding:5px 9px;
-  font-size:11px;cursor:pointer;font-family:inherit;margin-right:4px}
-.presets button:hover{color:var(--amber);border-color:var(--amber)}
-/* 主区 */
-.wrap{display:flex;gap:14px;padding:6px 18px 18px;align-items:flex-start}
-.treebox{flex:1;overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
-.treecols{display:flex;gap:10px;align-items:flex-start;min-width:min-content}
-.col{display:flex;flex-direction:column;gap:4px;min-width:186px}
-.rankdiv{font-size:11px;color:var(--sub);border-top:1px dashed var(--line);margin:8px 0 4px;padding-top:4px;letter-spacing:1px}
-.col .rankdiv:first-child{margin-top:0;border-top:none}
-/* 载具卡 */
-.vcard{display:flex;gap:8px;align-items:center;background:#111620;border:1px solid var(--line);border-left:3px solid #39414e;
-  border-radius:9px;padding:4px 8px 4px 4px;cursor:pointer;transition:border-color .12s,background .12s;user-select:none}
-.vcard:hover{background:#151b27}
-.vcard img{width:64px;height:40px;object-fit:cover;border-radius:5px;background:#0a0d12;flex:none}
-.vcard .nm{font-size:12px;font-weight:600;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.vcard .cost{font-size:10.5px;color:var(--sub);line-height:1.3;white-space:nowrap}
-.vcard .main{min-width:0;flex:1}
-.chip{display:inline-block;font-size:9px;border-radius:4px;padding:0 4px;margin-left:4px;vertical-align:1px;font-weight:700}
-/* 类别色(左边条) */
-.vcard.cat-prem{border-left-color:var(--amber)}
-.vcard.cat-pack{border-left-color:var(--orange)}
-.vcard.cat-mp{border-left-color:var(--blue)}
-.vcard.cat-mp-prem{border-left-color:var(--blue)}
-.vcard.cat-sq{border-left-color:var(--green)}
-/* 状态 */
-.vcard.owned{opacity:.45}
-.vcard.owned .nm::after{content:" ✓";color:var(--green)}
-.vcard.target{outline:2px solid var(--amber);box-shadow:0 0 10px rgba(230,168,23,.35)}
-.vcard.onpath{background:#1a2130;border-color:#3b4a63}
-/* 侧栏 */
-.panel{width:308px;flex:none;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;position:sticky;top:64px}
-.panel h3{margin:0 0 8px;font-size:15px}
-.panel .sub{color:var(--sub);font-size:11.5px;margin:2px 0}
-.panel img.big{width:100%;border-radius:9px;background:#0a0d12;margin:6px 0}
-.btnrow{display:flex;gap:8px;margin:10px 0}
-.btn{flex:1;background:#0e131b;border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:8px 6px;
-  font-size:13px;cursor:pointer;font-family:inherit}
-.btn:hover{border-color:var(--amber);color:var(--amber)}
-.btn.on{background:var(--green);border-color:var(--green);color:#0c130d;font-weight:700}
-.btn.tgt{background:var(--amber);border-color:var(--amber);color:#14181f;font-weight:700}
-.totals{border-top:1px solid var(--line);margin-top:10px;padding-top:10px}
-.trow{display:flex;justify-content:space-between;font-size:13px;margin:5px 0}
-.trow b{color:var(--amber)}
-.plist{max-height:300px;overflow-y:auto;margin-top:8px;border-top:1px solid var(--line);padding-top:6px}
-.prow{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;padding:3px 0;color:var(--sub);border-bottom:1px dotted #1d2430}
-.prow .pn{color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.prow .direct{color:var(--green);font-size:10px}
-.hint{color:var(--sub);font-size:11.5px;line-height:1.7}
-/* 页脚 */
-.foot{padding:16px 18px 22px;color:#5b636d;font-size:11px;line-height:1.8}
-.foot a{color:#768089}
-.foot a:hover{color:var(--amber)}
-::-webkit-scrollbar{width:10px;height:10px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:#2b3240;border-radius:6px;border:2px solid transparent;background-clip:content-box}
-@media (max-width:900px){.wrap{flex-direction:column}.panel{width:100%;position:static}}
+
+/*
+* LTS version is only available to premium users.
+* Best I can do is to hide the warning.
+* Oh well :/
+*/
+.cke_notifications_area {
+	display: none;
+}
+
+html,
+body {
+	margin: 0;
+}
+
+.select2-search,
+.select2-results__option,
+.select2-container--default .select2-results__option--selected {
+	background-color: var(--tech_tree_bg);
+}
+
+td {
+	border: 1px black solid;
+}
+
+ul {
+	padding-left: 17px;
+}
+
+#deleteSelectDiv {
+	text-align: center;
+	padding-bottom: 15px;
+}
+
+#exportModal .modal-body {
+	text-align: center;
+}
+
+#nameInputDiv {
+	text-align: center;
+	padding-bottom: 15px;
+}
+
+blockquote {
+	font-style: italic;
+	border-left: 3px rgb(31, 31, 31) solid;
+	padding: 5px;
+}
+
+#editSelectDiv {
+	text-align: center;
+	padding-bottom: 15px;
+}
+
+#vehicleImageListEditAdd,
+#vehicleImageListAdd {
+	display: block;
+	margin-top: 5px;
+	background-color: rgb(78, 156, 0);
+	color: white;
+	border-radius: 3px;
+	border: 1px solid black;
+	cursor: pointer;
+}
+
+#vehicleClassIcons,
+#vehicleClassIconsEdit {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-pack: space-between;
+	-ms-flex-pack: space-between;
+	justify-content: space-between;
+	padding: 15px;
+	-ms-flex-wrap: wrap;
+	flex-wrap: wrap;
+}
+
+#vehicleClassIcons svg,
+#vehicleClassIconsEdit svg {
+	padding: 5px;
+	border-bottom: 4px transparent solid;
+	border-radius: 5px;
+	cursor: pointer;
+	-webkit-filter: drop-shadow(0px 0px 5px rgb(0, 0, 0));
+	filter: drop-shadow(0px 0px 5px rgb(0, 0, 0));
+}
+
+.classIconContainer input:checked~svg {
+	border-color: green !important;
+}
+
+#addButton,
+#editButton {
+	display: block;
+	margin: auto;
+	margin-top: 15px;
+	font-size: 1.3rem;
+	background-color: rgb(78, 156, 0);
+	color: white;
+	border-radius: 3px;
+	border: 1px solid black;
+	cursor: pointer;
+}
+
+#modalDesc h1,
+#modalDesc h2,
+#modalDesc h3 {
+	font-weight: normal;
+}
+
+.flexWrapper {
+	width: 50%;
+	float: left;
+}
+
+.inputModalFlex {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-wrap: wrap;
+	flex-wrap: wrap;
+	-webkit-box-pack: center;
+	-ms-flex-pack: center;
+	justify-content: center;
+}
+
+.inputModalFlexChild {
+	padding: 3px;
+	width: -webkit-fit-content;
+	width: -moz-fit-content;
+	width: fit-content;
+}
+
+.flexTitle {
+	width: 100%;
+	display: inline-block;
+	text-align: center;
+	font-size: large;
+}
+
+body {
+	font-family: 'Arial';
+	background-color: var(--tech_tree_bg);
+	color: var(--text_col);
+}
+
+.type_researchable,
+.type_reserve,
+.type_event {
+	background-color: rgb(46, 66, 80);
+}
+
+.type_premium {
+	background-color: rgb(60, 52, 28);
+}
+
+.type_squadron {
+	background-color: rgb(48, 70, 44);
+}
+
+.badgeSide {
+	width: 10px;
+}
+
+.badgeLine {
+	height: 20px;
+	padding: 0px;
+}
+
+.codeFont {
+	background-color: lightgray;
+	color: black;
+	font-style: normal;
+}
+
+#techTreeHint {
+	text-align: center;
+	width: 100%;
+	display: block;
+	padding-bottom: 5px;
+}
+
+#techTree {
+	margin: auto;
+	width: -webkit-fit-content;
+	width: -moz-fit-content;
+	width: fit-content;
+}
+
+#techTreeWrapper {
+	width: 100%;
+	overflow: auto;
+}
+
+#techTree img,
+#delModal .modal-body img {
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
+}
+
+#vehicleDeleteDisplay {
+	background-color: var(--tech_tree_bg);
+	width: -webkit-fit-content;
+	width: -moz-fit-content;
+	width: fit-content;
+	margin: 10px;
+	margin: auto;
+	border-radius: 10px;
+}
+
+#techTreeName {
+	display: block;
+	margin: auto;
+	text-align: center;
+	height: 2rem;
+	font-size: 2rem;
+	max-width: 95vw;
+}
+
+#techTreeNameLabel,
+#techTreeMainDescLabel {
+	display: block;
+	text-align: center;
+}
+
+#deleteAllButton {
+	display: block;
+	margin: auto;
+	margin-top: 10px;
+	background-color: rgb(212, 0, 0);
+	color: black;
+	font-weight: bold;
+	padding: 10px;
+	border: 3px black dashed;
+	cursor: pointer;
+}
+
+a {
+	color: greenyellow;
+}
+
+#techTree table,
+#delModal .modal-body table {
+	border-collapse: separate;
+	border-spacing: 0;
+}
+
+#techTree td,
+#delModal .modal-body td {
+	border-color: rgba(0, 0, 0, 0);
+	border-top-width: 0px;
+	border-bottom-width: 0px;
+}
+
+.rank {
+	border-left: 2px solid white;
+	border-right: 2px solid white;
+	border-bottom: 2px solid white;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	width: -webkit-fit-content;
+	width: -moz-fit-content;
+	width: fit-content;
+}
+
+.rank:first-of-type {
+	border-top: 2px solid white;
+}
+
+.branch {
+	width: 182px;
+	display: inline-block;
+	vertical-align: top;
+	-ms-flex-negative: 0;
+	flex-shrink: 0;
+}
+
+.vehicleName {
+	z-index: 1;
+	text-shadow: 0px 0px 11px #000000;
+	max-width: 140px;
+	position: absolute;
+	top: 0px;
+	left: 4px;
+}
+
+.faithful .vehicleName {
+	left: initial;
+	right: 4px;
+	text-align: right;
+}
+
+.vehicleBr {
+	z-index: 1;
+	text-shadow: 0px 0px 11px #000000;
+	position: absolute;
+	bottom: 1px;
+	right: 2px;
+}
+
+.faithful .vehicleBr {
+	right: 30px;
+}
+
+.folderNumber {
+	position: absolute;
+	top: -1px;
+	right: -1px;
+	border: none;
+	text-align: right;
+	width: 30px;
+	height: 30px;
+	background: -o-linear-gradient(bottom left, transparent 50%, #000000 0) top right/30px 30px no-repeat, transparent;
+	background: -webkit-gradient(linear, left bottom, right top, color-stop(50%, transparent), color-stop(0, #000000)) top right/30px 30px no-repeat, transparent;
+	background: linear-gradient(to top right, transparent 50%, #000000 0) top right/30px 30px no-repeat, transparent;
+}
+
+.faithful .folderNumber {
+	left: -1px;
+	top: -12px;
+	width: 50px;
+	height: 12px;
+	background: rgb(46, 66, 80);
+	border: 1px black solid;
+	border-bottom: none;
+	font-size: 10px;
+	text-align: left;
+	padding-left: 3px;
+}
+
+.vehicleBadge {
+	width: 150px;
+	height: 50px;
+	border: 1px black solid !important;
+}
+
+.vehicleBadge svg {
+	position: absolute;
+	bottom: 19px;
+	right: 3px;
+	z-index: 1;
+	-webkit-filter: drop-shadow(0px 0px 5px rgb(0, 0, 0));
+	filter: drop-shadow(0px 0px 5px rgb(0, 0, 0));
+}
+
+.faithful .vehicleBadge svg {
+	bottom: 4px;
+}
+
+/*.fillerDiv {}*/
+
+#orderModal table {
+	margin: auto;
+	border-spacing: 10px;
+}
+
+#orderModal td {
+	border: none;
+}
+
+#orderModal th {
+	color: rgb(221, 0, 0);
+	cursor: pointer;
+}
+
+nav {
+	position: fixed;
+	left: 0;
+	top: 0;
+	z-index: 3;
+}
+
+nav div {
+	background-color: rgb(5, 35, 36);
+	padding: 3px;
+	border-radius: 0 5px 5px 0;
+	border: 1px solid black;
+	border-left: none;
+	cursor: pointer;
+	text-align: center;
+}
+
+nav div:nth-child(odd) {
+	background-color: rgb(38, 74, 75);
+}
+
+.lineDiv {
+	width: 20px;
+	background-color: rgb(96, 125, 139);
+	height: 100%;
+	margin: auto;
+}
+
+.lineArrow {
+	width: 0px;
+	height: 0px;
+	border-left: 20px solid transparent;
+	border-right: 20px solid transparent;
+	border-top: 20px solid rgb(96, 125, 139);
+	margin: auto;
+}
+
+.rankNumber {
+	border-right: 2px solid white;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	min-width: 1.2rem;
+}
+
+.rankNumberText {
+	-webkit-writing-mode: vertical-rl;
+	-ms-writing-mode: tb-rl;
+	writing-mode: vertical-rl;
+	-webkit-text-orientation: mixed;
+	text-orientation: mixed;
+	padding: 3px;
+	height: -webkit-fit-content;
+	height: -moz-fit-content;
+	height: fit-content;
+	-webkit-transform: rotate(180deg);
+	-ms-transform: rotate(180deg);
+	transform: rotate(180deg);
+}
+
+#vehicleImageList td,
+#vehicleImageListEdit td {
+	border: none;
+	-webkit-transform: translateY(10px);
+	-ms-transform: translateY(10px);
+	transform: translateY(10px);
+}
+
+#vehicleImageList input,
+#vehicleImageListEdit input {
+	width: 300px;
+}
+
+#vehicleImageList,
+#vehicleImageListEdit {
+	margin-top: 0;
+}
+
+#vehicleImageList li::marker,
+#vehicleImageListEdit li::marker {
+	font-size: 2rem;
+}
+
+/*REGION TOOLTIPS*/
+.tooltip {
+	position: relative;
+	display: inline-block;
+}
+
+.tooltip .tooltipText {
+	visibility: hidden;
+	width: 300px;
+	background-color: black;
+	text-align: center;
+	padding: 5px 0;
+	border-radius: 6px;
+
+	position: absolute;
+	z-index: 2;
+}
+
+.tooltip:hover .tooltipText {
+	visibility: visible;
+}
+
+.tooltipText {
+	top: 30px
+}
+
+.folderTooltip {
+	margin-bottom: -4px;
+	position: relative;
+	display: inline-block;
+}
+
+.folderTooltip .folderTooltipText {
+	visibility: hidden;
+	position: absolute;
+	z-index: 2;
+}
+
+.folderTooltipText {
+	top: 0px;
+}
+
+.folderTooltip .vehicleBadge {
+	cursor: pointer;
+}
+
+.folderTooltip .folderTooltipText .vehicleBadge {
+	cursor: default;
+}
+
+.carpet {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: calc(100% - 22px);
+	height: calc(100% - 32px);
+	margin: 16px 11px;
+	background-color: rgb(62, 77, 85);
+	border-radius: 3px;
+}
+
+.folderTooltipText .lineArrow,
+.folderTooltipText .lineDiv {
+	position: relative;
+	z-index: 1;
+}
+
+/*ENDREGION TOOLTIPS*/
+
+/* The Modal (background) */
+.modal {
+	display: none;
+	/* Hidden by default */
+	position: fixed;
+	/* Stay in place */
+	z-index: 4;
+	/* Sit on top */
+	left: 0;
+	top: 0;
+	width: 100%;
+	/* Full width */
+	height: 100%;
+	/* Full height */
+	overflow: auto;
+	/* Enable scroll if needed */
+	background-color: rgb(0, 0, 0);
+	/* Fallback color */
+	background-color: rgba(0, 0, 0, 0.75);
+	/* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+.modal-content {
+	background-color: rgb(46, 66, 80);
+	margin: 15% auto;
+	/* 15% from the top and centered */
+	padding: 20px;
+	width: 100%;
+	/* Could be more or less, depending on screen size */
+	max-width: 750px;
+}
+
+.modal-gallery {
+	width: 100%;
+}
+
+/* The Close Button */
+.close {
+	color: rgb(255, 255, 255);
+	float: right;
+	font-size: 28px;
+	font-weight: bold;
+}
+
+.galleria {
+	width: 100%;
+	height: 400px;
+	background: #000;
+}
+
+.cke_wysiwyg_div,
+.cke_wysiwyg_frame {
+	background-color: black;
+}
+
+.close:hover,
+.close:focus {
+	color: rgb(255, 0, 0);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+/* Modal Header */
+.modal-header {
+	padding: 2px 16px;
+	background-color: rgb(25, 37, 46);
+	color: white;
+}
+
+/* Modal Body */
+.modal-body {
+	padding: 10px;
+}
+
+#followLoopWarning {
+	display: none;
+}
+
+#followLoopWarning b {
+	color: red;
+}
+
+/* Modal Content */
+.modal-content {
+	position: relative;
+	margin: auto;
+	padding: 0;
+	width: 100%;
+	-webkit-box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+	-webkit-animation-name: animateTop;
+	animation-name: animateTop;
+	-webkit-animation-duration: 0.4s;
+	animation-duration: 0.4s;
+}
+
+/* Add Animation */
+@-webkit-keyframes animateTop {
+	from {
+		top: -300px;
+		opacity: 0;
+	}
+
+	to {
+		top: 0;
+		opacity: 1;
+	}
+}
+
+@keyframes animateTop {
+	from {
+		top: -300px;
+		opacity: 0;
+	}
+
+	to {
+		top: 0;
+		opacity: 1;
+	}
+}
+
+footer {
+	margin-top: 50px;
+	padding: 25px;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-pack: space-evenly;
+	-ms-flex-pack: space-evenly;
+	justify-content: space-evenly;
+	-ms-flex-wrap: wrap;
+	flex-wrap: wrap;
+	max-width: 750px;
+	margin: auto;
+}
+
+footer div {
+	text-align: center;
+	padding: 5px;
+}
+
+footer a {
+	display: block;
+	border-bottom: 2px solid white;
+	border-radius: 5px;
+	padding: 3px;
+	text-decoration: none;
+	width: -webkit-fit-content;
+	width: -moz-fit-content;
+	width: fit-content;
+	margin: auto;
+}
+
+footer i {
+	display: block;
+	padding-top: 3px;
+}
+
+footer img {
+	width: 32px;
+}
+
+#settingsModal label {
+	display: block;
+	margin: auto;
+	margin-top: 3px;
+	margin-bottom: 3px;
+	padding: 3px;
+	width: 200px;
+	border: 1px solid white;
+	border-radius: 3px;
+	text-align: right;
+	background-color: var(--tech_tree_bg)
+}
+
+#settingsModal p {
+	display: block;
+	margin: auto;
+	margin-top: 10px;
+	margin-bottom: 3px;
+	width: fit-content;
+}
+/* ============================================================
+   wtrp additions (2026-09-19) — on top of WT-Tech-Tree-Maker styles
+   ============================================================ */
+:root { --wtrp-amber:#e6a817; --wtrp-green:#3fb950; --wtrp-blue:#58a6ff; --wtrp-orange:#f78166; }
+
+body { font-family: 'Microsoft YaHei','PingFang SC',system-ui,Arial,sans-serif; }
+
+/* pack / market categories (same convention as premium/squadron tints) */
+.type_pack   { background-color: rgb(68,48,30); }
+.type_market { background-color: rgb(34,52,72); }
+
+/* ---------- top bar ---------- */
+#wtrpTop {
+  position:sticky; top:0; z-index:30; background:linear-gradient(180deg,#1c2129,#141821);
+  box-shadow:0 2px 12px rgba(0,0,0,.4); padding:8px 14px 6px;
+}
+#wtrpTop .row { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+#wtrpTop .brand { font-size:17px; font-weight:800; color:#fff; margin-right:10px; }
+#wtrpTop .brand span { color:var(--wtrp-amber); }
+#wtrpTop .ver { margin-left:auto; font-size:11px; color:#8b949e; border:1px solid #252c3a; border-radius:8px; padding:3px 9px; }
+.wtab {
+  background:rgba(230,168,23,.06); border:1px solid rgba(230,168,23,.3); color:var(--wtrp-amber);
+  border-radius:8px; padding:5px 12px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit;
+}
+.wtab:hover { background:rgba(230,168,23,.15); }
+.wtab.active { background:var(--wtrp-amber); color:#14181f; border-color:var(--wtrp-amber); }
+#wtrpLegend { font-size:11px; color:#8b949e; padding:4px 2px 0; }
+#wtrpLegend i { display:inline-block; width:10px; height:10px; border-radius:3px; margin:0 4px 0 12px; vertical-align:-1px; border:1px solid #000; }
+
+/* ---------- selection states on badges ---------- */
+.vehicleBadge.vowned { outline:2px solid var(--wtrp-green); }
+.vehicleBadge.vowned .vehicleName::after { content:" ✓"; color:var(--wtrp-green); }
+.vehicleBadge.vowned img { filter:grayscale(.7) brightness(.8); }
+.vehicleBadge.vtarget { outline:2px solid var(--wtrp-amber); box-shadow:0 0 10px rgba(230,168,23,.45); }
+.vehicleBadge.vpath { outline:2px dashed var(--wtrp-blue); }
+
+/* ---------- calc panel ---------- */
+#wtrpPanel {
+  position:fixed; right:14px; top:86px; width:300px; z-index:25;
+  background:#161b24; border:1px solid #252c3a; border-radius:14px; padding:13px; color:#d7dde6; font-size:13px;
+  max-height:calc(100vh - 110px); overflow-y:auto;
+}
+#wtrpPanel h3 { margin:0 0 6px; font-size:15px; color:#fff; }
+#wtrpPanel .sub { color:#8b949e; font-size:11.5px; }
+#wtrpPanel .trow { display:flex; justify-content:space-between; margin:4px 0; }
+#wtrpPanel .trow b { color:var(--wtrp-amber); }
+#wtrpPanel .plist { max-height:260px; overflow-y:auto; border-top:1px solid #252c3a; margin-top:8px; padding-top:6px; }
+#wtrpPanel .prow { display:flex; justify-content:space-between; gap:6px; font-size:11.5px; color:#8b949e; padding:2px 0; border-bottom:1px dotted #1d2430; }
+#wtrpPanel .prow .pn { color:#d7dde6; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#wtrpPanel input[type=number] {
+  width:78px; background:#0e131b; border:1px solid #252c3a; color:#d7dde6; border-radius:7px; padding:4px 6px; font-size:12px;
+}
+#wtrpPanel .presets button, #wtrpPanel .small {
+  background:#0e131b; border:1px solid #252c3a; color:#8b949e; border-radius:6px; padding:3px 7px; font-size:11px; cursor:pointer; font-family:inherit; margin-right:3px;
+}
+#wtrpPanel .presets button:hover { color:var(--wtrp-amber); border-color:var(--wtrp-amber); }
+#wtrpPanel .empty { color:#8b949e; font-size:12px; line-height:1.8; }
+#wtrpToggle {
+  position:fixed; right:14px; top:52px; z-index:26; display:none;
+  background:rgba(230,168,23,.1); border:1px solid rgba(230,168,23,.4); color:var(--wtrp-amber);
+  border-radius:8px; padding:4px 10px; font-size:12px; cursor:pointer;
+}
+@media (max-width:1100px) {
+  #wtrpPanel { position:static; width:auto; margin:10px 14px; max-height:none; }
+  #wtrpToggle { display:block; }
+  #wtrpPanel.hidden { display:none; }
+}
+
+/* ---------- vehicle popup (replaces galleria) ---------- */
+#vehicleDisplayModal .modal-content { width:min(430px,92vw); }
+#vPopupImg { width:100%; border-radius:8px; background:#0a0d12; display:block; }
+#vPopupStats { font-size:13px; line-height:1.9; margin:8px 0; }
+#vPopupStats b { color:var(--wtrp-amber); }
+#vPopupBtns { display:flex; gap:8px; margin-top:10px; }
+#vPopupBtns button {
+  flex:1; background:#0e131b; border:1px solid #252c3a; color:#d7dde6; border-radius:9px; padding:9px 4px;
+  font-size:13px; cursor:pointer; font-family:inherit;
+}
+#vPopupBtns button:hover { border-color:var(--wtrp-amber); color:var(--wtrp-amber); }
+#vPopupBtns button.on-own  { background:var(--wtrp-green); border-color:var(--wtrp-green); color:#0c130d; font-weight:700; }
+#vPopupBtns button.on-tgt  { background:var(--wtrp-amber); border-color:var(--wtrp-amber); color:#14181f; font-weight:700; }
+
+/* ---------- footer ---------- */
+#wtrpFoot { color:#5b636d; font-size:11px; line-height:1.8; padding:14px 16px 24px; text-align:center; }
+#wtrpFoot a { color:#768089; }
+#wtrpFoot a:hover { color:var(--wtrp-amber); }
+
+/* hide editor leftovers */
+#techTreeHint { display:none; }
