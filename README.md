@@ -1,35 +1,31 @@
 # wtrp — WT 研发点计算器
 
-线上:https://anhappy.com/wtrp/ 。纯静态(零后端、零构建、零常驻内存)。
+线上:https://anhappy.com/wtrp/ 。纯静态部署(零后端、零常驻内存)。
 
-**科技树渲染核心基于 [WT-Tech-Tree-Maker](https://github.com/przemyslaw-zan/WT-Tech-Tree-Maker)(przemyslaw-zan,MIT)修改**(上游许可见 LICENSE-TTM):保留了它的等级横带 × 纵列布局、文件夹组、连线箭头与右侧高级区机制;移除了编辑器(CKEditor/galleria/jQuery/select2),改为数据管线加载,并叠加计算层。本仓库其余代码以 MIT 提供(见 LICENSE)。
+## 构成
 
-## 功能
-
-- 10 国 × 5 分支(陆战/空战/直升机/蓝水海军/海岸海军)科技树,**布局=游戏内列序**(shop.blkx),等级 I-VII 横带、纵列、文件夹组(+N)、科技树连线箭头、高级/礼包/市场/中队车在右侧独立区(白线分隔),卡片背景色按类别区分
-- 每张卡片:官方 statcard 图 + 简体中文名 + BR + NATO 风格类别图标
-- 点击载具:详情弹窗(图/等级/BR/研发开销/前置)+ **已拥有**(✓,localStorage 持久)+ **加入目标(可多选!)**
-- 计算面板(多目标):前置闭包并集 → 待研发台数 / 剩余研发点 / 购买银狮 / 高级直购金鹰 / 约合场次 / 约合时长 / 金鹰全转换(1 GE=45 RP);每目标单独列出
-- 路径高亮:目标金色框、路径前置蓝色虚线框、已拥有灰绿 ✓
-- 输入"有效RP/场"(F2P/高账/高+符 预设)与"每场分钟",localStorage 记忆
+| 部分 | 说明 |
+|---|---|
+| `app/` | **主体应用 = [GrindTracker](https://github.com/ItsMeRaijiN/GrindTracker-WarThunder_RP_Calculator)(ItsMeRaijiN)前端改造版**:React 19 + Vite + TS,纯静态模式(VITE_DATA_MODE=static)。已获作者许可使用(见 LICENSE-GT-NOTE);改造点=全量中文化、载具卡/详情显示官方 statcard 图、目录数据换成我们管线产的 2.59 简中版、部署于 /wtrp/ 子路径、顶栏入口链到游戏样式科技树 |
+| `tree/` | **游戏样式科技树 = [WT-Tech-Tree-Maker](https://github.com/przemyslaw-zan/WT-Tech-Tree-Maker)(przemyslaw-zan,MIT)渲染核心改造**:等级横带×纵列=游戏布局、文件夹组、高级/礼包/市场/中队右侧区,官方图+简中名 |
+| `gen_catalog.py` | 生成 app/public/data/catalog.json(GrindTracker schema):/wtapi/ 数据(2.59.0.13)+ names-zh + statcard 图路径 + shop.blkx 列序/文件夹 → 3342 节点/2190 前置边/44 树 |
+| `gen_data.py` | 生成 tree/ttm-data/c_<国家>.json(TTM 格式) |
 
 ## 数据
 
-| 数据 | 来源 |
-|---|---|
-| 科技树布局+类别+经济字段 | `gen_data.py` 生成 → `data/c_<country>.json`(10 国,共 ~890KB;shop.blkx 列序 + follow 链锁序 + 文件夹组展开) |
-| statcard 图 / 中文名 | 运行时取姊妹服务 `/wtapi/`(assets/images、names-zh、vehicles-full 的 required_vehicle 前置链) |
+运行时同源依赖姊妹服务 **/wtapi/**(statcard 图 `assets/images/<id>.png`);catalog 与树数据随 WT 大版本重新生成(流程:datamine pull → wtapi 管线 → `gen_data.py` + `gen_catalog.py` → 构建/上传,详见 `/root/docs/wtrp-deploy-plan/steps.md`)。
 
-## 更新数据(WT 大版本)
+## 构建
 
 ```bash
-# 前置:本机 E:\ah\wtapi-build\datamine 已 git pull 到新版本,/wtapi/ 已换版
-PYTHONIOENCODING=utf-8 python gen_data.py    # 重产 data/c_*.json
-# 上传 index.html style.css script.js data/ → 服务器 /opt/services/wtrp/(data/ 是 no-cache,即时生效)
+# Windows,Node ≥22(本机 C:\Program Files\nvm\v24.20.0),依赖走 npmmirror(app/.npmrc 已配)
+cd app && npm install && npm run build   # 产物 app/dist/(tsc 类型检查 + vite)
 ```
 
 ## 许可与归属
 
-- 本仓库代码:MIT(LICENSE);内含 WT-Tech-Tree-Maker 上游 MIT 许可副本(LICENSE-TTM)
-- 载具名与图片 © Gaijin Localization;数据来自公开 datamine(gszabi99),仅作非商业粉丝工具用途
+- GrindTracker 前端:© ItsMeRaijiN,**经作者许可用于本站**(2026-09 站长联系取得;上游仓库无 LICENSE 文件,见 LICENSE-GT-NOTE)
+- WT-Tech-Tree-Maker 渲染核心:MIT(见 LICENSE-TTM)
+- 本仓库对二者的改造与其余脚本:MIT(见 LICENSE)
+- 载具名与图片 © Gaijin Localization;数据来自 gszabi99/War-Thunder-Datamine 公开采掘,仅作非商业粉丝工具用途
 - Not affiliated with Gaijin Entertainment

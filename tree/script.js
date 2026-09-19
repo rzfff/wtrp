@@ -501,7 +501,7 @@ function persist () {
 
 async function loadCountry ( country ) {
 	if ( S.cache[ country ] ) return S.cache[ country ];
-	const data = await fetch( `data/c_${ country }.json` ).then( r => r.json() );
+	const data = await fetch( `ttm-data/c_${ country }.json` ).then( r => r.json() );
 	S.version = data.version;
 	$( '#verBadge' ).textContent = `数据版本 ${ data.version }`;
 	S.cache[ country ] = data.branches;
