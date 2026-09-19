@@ -17,7 +17,7 @@
     expanded: new Set(),
     search: "",
     needCache: new Map(),
-    openFolder: null, // 当前展开的文件夹根 id
+    openFolders: new Set(), // 展开中的文件夹根 id(可同时多个,游戏同款)
   };
 
   const el = {};
@@ -49,10 +49,9 @@
       }
     }, true);
     document.addEventListener("click", e => {
-      if (!e.target.closest(".folder")) closeFolder();
+      if (!e.target.closest(".folder")) closeAllFolders();
     });
-    document.addEventListener("keydown", e => { if (e.key === "Escape") closeFolder(); });
-    el.treeWrap.addEventListener("scroll", closeFolder);
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeAllFolders(); });
     window.addEventListener("hashchange", () => { loadHash(); buildClassTabs(); renderTree(); });
     renderTree();
     renderPanel();
@@ -139,7 +138,7 @@
 
   /* ---------- 科技树 ---------- */
   function renderTree() {
-    closeFolder();
+    closeAllFolders();
     const nodes = state.catalog.nodes.filter(n => n.nation === state.nation && n.class === state.cls);
     const tree = state.catalog.trees.find(t => t.nation === state.nation && t.class === state.cls);
     const colCount = tree ? tree.research_column_count : 1;
@@ -191,6 +190,10 @@
     }
     el.tree.innerHTML = "";
     el.tree.appendChild(frag);
+    // 恢复展开状态(切页重渲染后)
+    el.tree.querySelectorAll(".folder").forEach(f => {
+      if (state.openFolders.has(Number(f.dataset.root))) f.classList.add("open");
+    });
     applySearch();
   }
 
@@ -237,53 +240,49 @@
     d.appendChild(stack);
     const badge = document.createElement("div");
     badge.className = "cbadge";
+    badge.title = "展开/收起";
     badge.textContent = "+" + unit.members.length;
     d.appendChild(badge);
-    // 就地展开面板:只有成员卡,游戏里没有多余标签
-    const panel = document.createElement("div");
-    panel.className = "fold-panel";
-    const items = document.createElement("div");
-    items.className = "fp-items";
-    for (const n of all) items.appendChild(cardEl(n));
-    panel.appendChild(items);
-    d.appendChild(panel);
+    // 同列向下就地展开(游戏样式):成员卡竖排在顶层卡下方
+    const body = document.createElement("div");
+    body.className = "fold-body";
+    for (const n of unit.members) body.appendChild(cardEl(n));
+    d.appendChild(body);
     return d;
   }
 
-  function closeFolder() {
-    if (state.openFolder == null) return;
-    const prev = el.tree.querySelector('.folder[data-root="' + state.openFolder + '"] .fold-panel');
-    if (prev) prev.classList.remove("open", "flip", "below");
-    state.openFolder = null;
+  function closeAllFolders() {
+    state.openFolders.clear();
+    el.tree.querySelectorAll(".folder.open").forEach(f => f.classList.remove("open"));
   }
 
   function toggleFolder(folderEl_) {
     const rootId = Number(folderEl_.dataset.root);
-    if (state.openFolder === rootId) { closeFolder(); return; }
-    closeFolder();
-    const panel = folderEl_.querySelector(".fold-panel");
-    if (!panel) return;
-    // 右缘防溢出:向左翻开;顶部防够不着:向下弹
-    const wrap = el.treeWrap.getBoundingClientRect();
-    const r = folderEl_.getBoundingClientRect();
-    if (r.left + 420 > wrap.right) panel.classList.add("flip");
-    if (r.top - wrap.top < 240) panel.classList.add("below");
-    panel.classList.add("open");
-    state.openFolder = rootId;
+    if (state.openFolders.has(rootId)) {
+      state.openFolders.delete(rootId);
+      folderEl_.classList.remove("open");
+    } else {
+      state.openFolders.add(rootId);
+      folderEl_.classList.add("open");
+    }
   }
 
   /* ---------- 交互 ---------- */
   function onTreeClick(e) {
-    // 文件夹面板内的卡片:只切换选中,不关面板
-    const panelCard = e.target.closest(".fold-panel .card");
-    if (panelCard) {
-      toggleSelect(Number(panelCard.dataset.id));
+    // 展开后的成员卡:直接切换选中
+    const bodyCard = e.target.closest(".fold-body .card");
+    if (bodyCard) { toggleSelect(Number(bodyCard.dataset.id)); return; }
+    const folder = e.target.closest(".folder");
+    if (folder) {
+      // 展开态下点顶层卡=选中组根车;收起态整体/角标=开关
+      const topCard = e.target.closest(".fstack .card");
+      if (folder.classList.contains("open") && topCard && !e.target.closest(".cbadge")) {
+        toggleSelect(Number(topCard.dataset.id));
+        return;
+      }
+      toggleFolder(folder);
       return;
     }
-    // 面板背景(非卡片区域)点击:只关面板,不视为切换文件夹
-    if (e.target.closest(".fold-panel")) { closeFolder(); return; }
-    const folder = e.target.closest(".folder");
-    if (folder) { toggleFolder(folder); return; }
     const card = e.target.closest(".card");
     if (card) toggleSelect(Number(card.dataset.id));
   }

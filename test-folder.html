@@ -33,14 +33,29 @@
 <script src="calc.js"></script>
 <script src="app.js"></script>
 <script>
-// 测试钩子:渲染完成后自动点开第一个文件夹
+// 测试钩子:渲染完成后自动点开第一个文件夹,并把几何结果写进 DOM
 (function () {
   const t = setInterval(() => {
     const f = document.querySelector("#tree .folder");
     if (f) {
       clearInterval(t);
       f.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      document.title = "TEST opened";
+      setTimeout(() => {
+        const open = f.classList.contains("open");
+        const top = f.querySelector(":scope > .fstack .card");
+        const m1 = f.querySelector(":scope > .fold-body .card");
+        const g = { open };
+        if (top) { const r = top.getBoundingClientRect(); g.topCard = { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) }; }
+        if (m1) { const r = m1.getBoundingClientRect(); g.member1 = { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width) }; }
+        if (top && m1) {
+          const a = top.getBoundingClientRect(), b = m1.getBoundingClientRect();
+          g.memberBelowSameColumn = b.y > a.y && Math.abs(b.x - a.x) < 5 && Math.abs(b.width - a.width) < 5;
+        }
+        const out = document.createElement("div");
+        out.id = "geom";
+        out.textContent = "GEOM=" + JSON.stringify(g);
+        document.body.appendChild(out);
+      }, 400);
     }
   }, 300);
 })();

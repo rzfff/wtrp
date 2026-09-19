@@ -169,19 +169,12 @@ main { flex: 1; display: flex; min-height: 0; }
   background: #000c; color: #ffd77a; font-size: 11px; line-height: 1;
   padding: 2px 6px; border-radius: 8px; border: 1px solid #6b5b23;
 }
-/* 就地展开面板:定宽多列,绝不随列宽挤压(v4.2 教训:被 .folder 限宽后标题竖排) */
-.fold-panel {
-  position: absolute; top: -10px; left: -10px; z-index: 900;
-  width: max-content; max-width: min(460px, calc(100vw - 60px));
-  background: var(--panel2); border: 1px solid #4a5a63; border-radius: 10px;
-  box-shadow: 0 6px 26px #000c; padding: 10px;
-  display: none;
-}
-.fold-panel.open { display: block; }
-.fold-panel.flip { left: auto; right: -10px; }
-.fold-panel.below { top: auto; bottom: -10px; }
-.fold-panel .fp-items { display: flex; flex-wrap: wrap; gap: 8px; }
-.fold-panel .fp-items .card { width: 128px; min-width: 128px; }
+/* 就地同列向下展开(游戏样式):成员卡竖排,垫层收起、顶层卡成为列表首张 */
+.folder .fold-body { display: none; flex-direction: column; gap: 8px; margin-top: 8px; }
+.folder.open .fold-body { display: flex; }
+.folder.open .fshell { display: none; }
+.folder.open .fstack { margin-bottom: 0; }
+.folder.open .cbadge { background: #ffd77a; color: #241a00; border-color: #b99b4e; }
 
 /* ── 按钮 ── */
 .btn {
