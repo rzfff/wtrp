@@ -149,39 +149,39 @@ main { flex: 1; display: flex; min-height: 0; }
 }
 .card.sel .selmark { display: flex; }
 
-/* ── 文件夹 ── */
+/* ── 文件夹:顶层=真实卡片,背后垫同款空卡壳(游戏样式) ── */
 .folder { position: relative; width: 100%; min-width: 112px; cursor: pointer; user-select: none; }
-.folder .fstack { position: relative; height: calc(var(--img-h) + 8px); }
-.folder .fstack .stk {
-  position: absolute; top: 0; left: 0;
-  width: calc(100% - 10px); height: var(--img-h);
-  background: #10161d center/cover no-repeat;
-  border: 1px solid var(--c-res-border); border-top: 2px solid var(--c-res-top);
+.folder .fstack { position: relative; margin-bottom: 9px; }
+.folder .fstack > .card { position: relative; z-index: 2; }
+.folder .fshell {
+  position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+  z-index: 1; pointer-events: none;
+  border: 1px solid var(--c-res-border);
+  border-top: 2px solid var(--c-res-top);
   border-radius: var(--radius);
+  background-color: var(--c-res-bg);
+  box-shadow: 0 2px 3px 1px #0000001a;
 }
-.folder .fstack .stk:nth-child(2) { transform: translate(5px, 4px); opacity: .72; }
-.folder .fstack .stk:nth-child(3) { transform: translate(10px, 8px); opacity: .42; }
-.folder .fstack .stk img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; display: block; }
-.folder .fstack .stk.noimg { display: flex; align-items: center; justify-content: center; color: #54636f; font-weight: 700; font-size: 18px; background-color: #1a232b; }
-.folder .cname { font-size: 12px; margin-top: 3px; height: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.folder .fshell.s1 { transform: translate(5px, 5px); }
+.folder .fshell.s2 { transform: translate(10px, 9px); }
 .folder .cbadge {
-  position: absolute; right: 0; top: calc(var(--img-h) - 16px); z-index: 3;
-  background: #000c; color: #ffd77a; font-size: 11px;
-  padding: 1px 6px; border-radius: 8px; border: 1px solid #6b5b23;
+  position: absolute; right: 2px; bottom: 26px; z-index: 3;
+  background: #000c; color: #ffd77a; font-size: 11px; line-height: 1;
+  padding: 2px 6px; border-radius: 8px; border: 1px solid #6b5b23;
 }
-/* 就地展开面板(参照 blind-thunder folding-vehicle) */
+/* 就地展开面板:定宽多列,绝不随列宽挤压(v4.2 教训:被 .folder 限宽后标题竖排) */
 .fold-panel {
-  position: absolute; top: -12px; left: -12px; z-index: 900;
+  position: absolute; top: -10px; left: -10px; z-index: 900;
+  width: max-content; max-width: min(460px, calc(100vw - 60px));
   background: var(--panel2); border: 1px solid #4a5a63; border-radius: 10px;
   box-shadow: 0 6px 26px #000c; padding: 10px;
   display: none;
 }
 .fold-panel.open { display: block; }
-.fold-panel.flip { left: auto; right: -12px; }
-.fold-panel .fp-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-.fold-panel .fp-title { font-size: 11px; color: var(--muted); }
-.fold-panel .fp-items { display: flex; flex-wrap: wrap; gap: 8px; max-width: 380px; }
-.fold-panel .fp-items .card { width: 122px; min-width: 122px; }
+.fold-panel.flip { left: auto; right: -10px; }
+.fold-panel.below { top: auto; bottom: -10px; }
+.fold-panel .fp-items { display: flex; flex-wrap: wrap; gap: 8px; }
+.fold-panel .fp-items .card { width: 128px; min-width: 128px; }
 
 /* ── 按钮 ── */
 .btn {

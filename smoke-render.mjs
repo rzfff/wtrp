@@ -34,7 +34,7 @@ const check = (name, ok, extra = "") => {
 const css = files["style.css"];
 const openB = (css.match(/{/g) || []).length, closeB = (css.match(/}/g) || []).length;
 check("style.css 花括号配平", openB === closeB, `${openB}/${closeB}`);
-for (const sel of [".folder .fstack", ".fold-panel.open", ".card .ph img", ".research", ".premium"]) {
+for (const sel of [".folder .fstack", ".fold-panel.open", ".card .ph img", ".research", ".premium", ".folder .fshell"]) {
   check("style.css 含选择器 " + sel, css.includes(sel));
 }
 
@@ -85,9 +85,15 @@ check("科技树渲染文件夹 ≥2(usa/army 含谢尔曼/M1 组)", folders.len
 const imgs = $$("#tree .card .ph img");
 check("载具卡图片为 <img> 标签 ≥100", imgs.length >= 100, String(imgs.length));
 check("图片地址全部 /wtapi/ 开头", imgs.every(i => (i.getAttribute("src") || "").startsWith("/wtapi/")));
-check("文件夹堆叠有 .fstack 包装且每层 ≥1 图层",
-  folders.every(f => f.querySelector(":scope > .fstack") && f.querySelectorAll(":scope > .fstack > .stk").length >= 1),
-  folders.map(f => f.querySelectorAll(":scope > .fstack > .stk").length).join(","));
+check("文件夹堆叠=真实卡片+垫层壳(fstack>.card 顶层,fshell 垫层)",
+  folders.every(f => {
+    const st = f.querySelector(":scope > .fstack");
+    return st && st.querySelector(":scope > .card") && f.querySelectorAll(":scope > .fstack > .fshell").length >= 1;
+  }),
+  folders.map(f => f.querySelectorAll(":scope > .fstack > .fshell").length).join(","));
+check("文件夹无多余文案(无「文件夹」标签/全选按钮)",
+  !doc.body.textContent.includes("文件夹 · 任选其一") && !doc.body.textContent.includes("全选"));
+check("顶层卡随文件夹有联合搜索名", folders.every(f => (f.dataset.name || "").split(" ").length >= 2));
 check("文件夹面板就地内嵌(.fold-panel)",
   folders.every(f => f.querySelector(":scope > .fold-panel") && f.querySelectorAll(":scope > .fold-panel .card").length >= 2));
 

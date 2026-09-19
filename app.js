@@ -224,34 +224,27 @@
     d.className = "folder";
     d.dataset.root = unit.root.id;
     d.dataset.name = all.map(m => m.name.toLowerCase()).join(" ");
-    const layers = all.filter(m => m.image).slice(0, 3);
-    let stacks;
-    if (layers.length) {
-      stacks = layers.map(m => `<div class="stk"><img src="${m.image}" alt="" loading="lazy"></div>`).join("");
-    } else {
-      stacks = `<div class="stk noimg">${CLS_ICON[unit.root.class] || "?"}</div>`;
+    // 堆叠 = 真实完整卡片(顶层) + 同款空卡壳垫层错位(游戏样式)
+    const stack = document.createElement("div");
+    stack.className = "fstack";
+    const shells = Math.min(all.length - 1, 2);
+    for (let i = shells; i >= 1; i--) {
+      const shell = document.createElement("div");
+      shell.className = "fshell" + (i >= 2 ? " s2" : " s1");
+      stack.appendChild(shell);
     }
-    d.innerHTML = `<div class="fstack">${stacks}</div><div class="cbadge">+${unit.members.length}</div><div class="cname">${esc(unit.root.name)}</div>`;
-    // 就地展开面板
+    stack.appendChild(cardEl(unit.root)); // 顶层就是普通载具卡(图+名+价+选中态)
+    d.appendChild(stack);
+    const badge = document.createElement("div");
+    badge.className = "cbadge";
+    badge.textContent = "+" + unit.members.length;
+    d.appendChild(badge);
+    // 就地展开面板:只有成员卡,游戏里没有多余标签
     const panel = document.createElement("div");
     panel.className = "fold-panel";
-    const head = document.createElement("div");
-    head.className = "fp-head";
-    head.innerHTML = `<span class="fp-title">文件夹 · 任选其一</span>`;
-    const allBtn = document.createElement("button");
-    allBtn.type = "button";
-    allBtn.className = "btn";
-    allBtn.textContent = "全选";
-    allBtn.addEventListener("click", ev => {
-      ev.stopPropagation();
-      all.forEach(n => state.selected.set(n.id, true));
-      afterSelectionChange();
-    });
-    head.appendChild(allBtn);
     const items = document.createElement("div");
     items.className = "fp-items";
     for (const n of all) items.appendChild(cardEl(n));
-    panel.appendChild(head);
     panel.appendChild(items);
     d.appendChild(panel);
     return d;
@@ -260,7 +253,7 @@
   function closeFolder() {
     if (state.openFolder == null) return;
     const prev = el.tree.querySelector('.folder[data-root="' + state.openFolder + '"] .fold-panel');
-    if (prev) prev.classList.remove("open", "flip");
+    if (prev) prev.classList.remove("open", "flip", "below");
     state.openFolder = null;
   }
 
@@ -270,10 +263,11 @@
     closeFolder();
     const panel = folderEl_.querySelector(".fold-panel");
     if (!panel) return;
-    // 右缘防溢出:向左翻开
-    const wrapRight = el.treeWrap.getBoundingClientRect().right;
+    // 右缘防溢出:向左翻开;顶部防够不着:向下弹
+    const wrap = el.treeWrap.getBoundingClientRect();
     const r = folderEl_.getBoundingClientRect();
-    if (r.left + 400 > wrapRight) panel.classList.add("flip");
+    if (r.left + 420 > wrap.right) panel.classList.add("flip");
+    if (r.top - wrap.top < 240) panel.classList.add("below");
     panel.classList.add("open");
     state.openFolder = rootId;
   }
@@ -321,6 +315,8 @@
     const q = state.search;
     if (!q) { el.tree.querySelectorAll(".hide").forEach(x => x.classList.remove("hide")); return; }
     el.tree.querySelectorAll(".card,.folder").forEach(x => {
+      // 文件夹顶层卡与面板成员卡随文件夹整体显隐,不单独匹配
+      if (x.classList.contains("card") && x.closest(".folder")) return;
       const name = (x.dataset.name || "").toLowerCase();
       x.classList.toggle("hide", !name.includes(q));
     });
