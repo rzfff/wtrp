@@ -1,31 +1,50 @@
-# wtrp — WT 研发点计算器
+# WT 研发点计算器(/wtrp/)
 
-线上:https://anhappy.com/wtrp/ 。纯静态部署(零后端、零常驻内存)。
+单页静态应用:游戏布局的科技树 + 研发点计算。数据来自本站 `/wtapi/` 管线(war-thunder-datamine 2.59.0.13)。
 
-## 构成
+在线:https://anhappy.com/wtrp/
 
-| 部分 | 说明 |
+## 功能
+
+- **科技树与游戏一致**:等级横带 × 分支纵列;文件夹堆叠(+N,点开选组内成员);金币/活动/市场/联队/礼包载具统一在右侧区(白线分隔),按种类着色。
+- **多选合计**:点选任意载具,右侧列出每辆花费与研发点合计(共享前置自动去重)。
+- **研发链**:单选一辆自动展开完整研发链(逐前置列出 RP,取"文件夹任选其一"的最便宜路径)。
+- 全中文(界面 + 载具名);官方 statcard 图;搜索过滤;选择结果 localStorage 保存;`#国家/兵种` URL 锚点。
+- 零构建、零外部依赖、零跟踪:纯 HTML/CSS/JS,图片走 `/wtapi/assets/images/`。
+
+## 目录
+
+| 文件 | 说明 |
 |---|---|
-| `app/` | **主体应用 = [GrindTracker](https://github.com/ItsMeRaijiN/GrindTracker-WarThunder_RP_Calculator)(ItsMeRaijiN)前端改造版**:React 19 + Vite + TS,纯静态模式(VITE_DATA_MODE=static)。已获作者许可使用(见 LICENSE-GT-NOTE);改造点=全量中文化、载具卡/详情显示官方 statcard 图、目录数据换成我们管线产的 2.59 简中版、部署于 /wtrp/ 子路径、顶栏入口链到游戏样式科技树 |
-| `tree/` | **游戏样式科技树 = [WT-Tech-Tree-Maker](https://github.com/przemyslaw-zan/WT-Tech-Tree-Maker)(przemyslaw-zan,MIT)渲染核心改造**:等级横带×纵列=游戏布局、文件夹组、高级/礼包/市场/中队右侧区,官方图+简中名 |
-| `gen_catalog.py` | 生成 app/public/data/catalog.json(GrindTracker schema):/wtapi/ 数据(2.59.0.13)+ names-zh + statcard 图路径 + shop.blkx 列序/文件夹 → 3342 节点/2190 前置边/44 树 |
-| `gen_data.py` | 生成 tree/ttm-data/c_<国家>.json(TTM 格式) |
+| `index.html` `style.css` `app.js` | 前端三件套 |
+| `calc.js` | 研发链计算核心(浏览器 `window.WTCalc` / Node `require` 双兼容) |
+| `data/catalog.json` | 唯一运行时数据(3294 节点 / 2700 边 / 44 树,schema_version 1) |
+| `data/ttm/c_*.json` | 中间产物(gen_data.py 输出,shop.blkx 列序/文件夹) |
+| `gen_data.py` | datamine `shop.blkx` → 每国列序数据(含 `showOnlyWhenBought` 右区标记) |
+| `gen_catalog.py` | 合并 vehicles-full + 简中名 + 图清单 → catalog.json(清块字符/缺图置空/文件夹任选连边) |
+| `validate-data.mjs` | 离线数据+计算断言(21 项,`node validate-data.mjs`) |
+| `check-wtrp.mjs` | 线上端到端验收(26 项,`node check-wtrp.mjs`) |
 
-## 数据
+## 更新流程(WT 大版本)
 
-运行时同源依赖姊妹服务 **/wtapi/**(statcard 图 `assets/images/<id>.png`);catalog 与树数据随 WT 大版本重新生成(流程:datamine pull → wtapi 管线 → `gen_data.py` + `gen_catalog.py` → 构建/上传,详见 `/root/docs/wtrp-deploy-plan/steps.md`)。
+1. wtapi 管线换版(`E:\ah\wtapi-build\`,datamine pull → 提取 → 导出)。
+2. `PYTHONIOENCODING=utf-8 python gen_data.py && python gen_catalog.py`
+3. `node validate-data.mjs` 全绿。
+4. 打包 `index.html style.css app.js calc.js data/catalog.json` 上服务器 `/opt/services/wtrp/`。
+5. `node check-wtrp.mjs` 全绿。
 
-## 构建
+## 数据要点(踩坑记录)
 
-```bash
-# Windows,Node ≥22(本机 C:\Program Files\nvm\v24.20.0),依赖走 npmmirror(app/.npmrc 已配)
-cd app && npm install && npm run build   # 产物 app/dist/(tsc 类型检查 + vite)
-```
+- **右区判定**:datamine 的 premium 标志不全(一战车/杯赛车/promo 全漏),权威信号是 `shop.blkx` 条目的 `showOnlyWhenBought`;有 `ge_cost` 归金币、否则归活动。
+- **文件夹语义**:组成员的前置 = 组根的前置(游戏"任选其一"),后继车向组内每辆连边,计算取 min。
+- **名字清洗**:names-zh 含游戏"缴获"标记(▀▅▄▃▂ U+2580-259F),生成时剥除。
+- **shop.blkx 脏键**:`reqAir`/`rank`/`slaveUnit` 等配置键混在载具列里,按 vehicles-full 名单过滤。
+- **锚点按列隔离**:跨列不连边(每列顶部是各等级 I 级起点,无前置)。
 
-## 许可与归属
+## 鸣谢
 
-- GrindTracker 前端:© ItsMeRaijiN,**经作者许可用于本站**(2026-09 站长联系取得;上游仓库无 LICENSE 文件,见 LICENSE-GT-NOTE)
-- WT-Tech-Tree-Maker 渲染核心:MIT(见 LICENSE-TTM)
-- 本仓库对二者的改造与其余脚本:MIT(见 LICENSE)
-- 载具名与图片 © Gaijin Localization;数据来自 gszabi99/War-Thunder-Datamine 公开采掘,仅作非商业粉丝工具用途
-- Not affiliated with Gaijin Entertainment
+样式参考 [GrindTracker](https://github.com/ItsMeRaijiN/GrindTracker-WarThunder_RP_Calculator),布局参考 [WT-Tech-Tree-Maker](https://github.com/przemyslaw-zan/WT-Tech-Tree-Maker)(MIT)。数据源于 Gaijin 官方 datamine 与社区简中翻译表。
+
+## 许可
+
+MIT(见 LICENSE)。载具图片版权归 Gaijin Entertainment 所有。

@@ -14,6 +14,7 @@
 用法: PYTHONIOENCODING=utf-8 <venv>/python gen_data.py
 依赖: ../wtapi-build/datamine(shop.blkx) + ../wtapi-build/dist/api/{vehicles-full,names-zh}.json
 """
+import collections
 import json
 import os
 from datetime import date
@@ -36,7 +37,7 @@ ICON_MAP = {
 }
 
 
-def cat_map(v):
+def cat_map(v, sowb):
     if v is None:
         return "event"
     if v["squadron_vehicle"]:
@@ -45,8 +46,9 @@ def cat_map(v):
         return "pack"
     if v["on_marketplace"]:
         return "market"
-    if v["is_premium"]:
-        return "premium"
+    if v["is_premium"] or sowb:
+        # shop.blkx 的 showOnlyWhenBought=游戏右区;无售价的活动/礼品车归 event
+        return "premium" if (v.get("ge_cost") or 0) > 0 else "event"
     return "researchable"
 
 
@@ -59,6 +61,7 @@ def main():
     os.makedirs("data", exist_ok=True)
     out = {"version": version, "generated": date.today().isoformat(), "countries": {}}
     total = 0
+    dropped_all = collections.Counter()
     for ckey, branches in shop.items():
         if not ckey.startswith("country_"):
             continue
@@ -74,23 +77,29 @@ def main():
                 branch_id = f"c{ci + 1}"
                 # 展平折叠组:成员标记 folder(同段内紧随前一辆)
                 flat = []
+                dropped = []
 
                 def walk(d, group):
                     for k, v in d.items():
                         if k == "image":
                             continue
-                        if isinstance(v, dict) and "image" in v:
+                        if k in veh:
+                            flat.append((k, group, v if isinstance(v, dict) else {}))
+                        elif isinstance(v, dict):
+                            # 组(含无 image 的组,如 *_wwi_group/_entente_group)→ 递归
                             walk(v, k[:-6] if k.endswith("_group") else k)
                         else:
-                            flat.append((k, group))
+                            # 标量配置键(reqAir/rank/slaveUnit/rankPosXY/futureReqAir)→ 跳过
+                            dropped.append(k)
 
                 walk(col, None)
+                dropped_all.update(dropped)
                 prev_in_rank = {}  # rank -> 上一个条目 id(锁顺序用)
                 last_group = last_rank = last_ttype = None
-                for vid, group in flat:
+                for vid, group, flags in flat:
                     v = veh.get(vid)
-                    rank = v["era"] if v else 1
-                    ttype = cat_map(v)
+                    rank = flags.get("rank") or (v["era"] if v else 1)
+                    ttype = cat_map(v, bool(flags.get("showOnlyWhenBought")))
                     # 文件夹链:与前一辆同组、同段(rank)、双方都是科技树车 → folder(紧随组根)
                     in_folder = (group is not None and group == last_group and rank == last_rank
                                  and ttype == "researchable" and last_ttype == "researchable")
@@ -121,12 +130,13 @@ def main():
         out["countries"][country] = cdata
 
     # 每国一文件(页面按需取一国)
+    os.makedirs("data/ttm", exist_ok=True)
     for country, cdata in out["countries"].items():
-        with open(f"data/c_{country}.json", "w", encoding="utf-8", newline="\n") as f:
+        with open(f"data/ttm/c_{country}.json", "w", encoding="utf-8", newline="\n") as f:
             json.dump({"version": out["version"], "country": country, "branches": cdata},
                       f, ensure_ascii=False, separators=(",", ":"))
-    sizes = sum(os.path.getsize(f"data/{f}") for f in os.listdir("data") if f.startswith("c_"))
-    print(f"version={version} 条目={total} 10 国文件共 {sizes/1024:.0f} KB")
+    sizes = sum(os.path.getsize(f"data/ttm/{f}") for f in os.listdir("data/ttm") if f.startswith("c_"))
+    print(f"version={version} 条目={total} 10 国文件共 {sizes/1024:.0f} KB 丢弃配置键={sum(dropped_all.values())}")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; base-uri 'none'">
+<title>WT 研发点计算器</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header id="top">
+  <div class="brand">WT 研发点计算器 <span id="ver" class="ver"></span></div>
+  <nav id="nations" class="tabs" aria-label="国家"></nav>
+  <nav id="classes" class="tabs" aria-label="兵种"></nav>
+  <input id="search" type="search" placeholder="搜索载具名称…" autocomplete="off" aria-label="搜索载具">
+</header>
+<main>
+  <div id="tree-wrap">
+    <div id="tree" aria-label="科技树"></div>
+    <div id="popover" class="pop hidden" role="dialog"></div>
+  </div>
+  <aside id="panel">
+    <div class="p-head">
+      <span id="p-title">已选载具 (0)</span>
+      <button id="p-clear" class="btn" type="button">清空</button>
+    </div>
+    <div id="p-list"></div>
+    <div id="p-foot"></div>
+  </aside>
+</main>
+<footer id="foot">
+  数据源:anhappy /wtapi/ 管线 · <span id="foot-ver"></span> ·
+  布局参考游戏科技树 · 样式参考 GrindTracker / WT-Tech-Tree-Maker
+</footer>
+<script src="calc.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
