@@ -1,6 +1,8 @@
-/* /wtrp/ v4.1 —— 单页研发点计算器
+/* /wtrp/ v4.7 —— 单页研发点计算器
  * 设计语言参照 blind-thunder.wiki 的 wt-tree:游戏卡片质感(底色+顶部色条+点阵纹理),
- * 选中=色条变金+斜纹叠层;文件夹就地展开面板;列弹性拉伸铺满。
+ * 选中=色条变金+斜纹叠层;文件夹就地展开面板;
+ * v4.7:卡片全站定宽 150px(换国家/兵种页不变)、图片区加高、列内间距统一(文件夹不再
+ * 额外下挤)、面纱更轻可辨背景字、缴获/外国车名前带本树国籍小国旗(游戏 ▀▅▄ 标记还原)。
  */
 :root {
   --bg: #14191b;
@@ -18,7 +20,7 @@
   --c-pac-bg: #5a4020; --c-pac-border: #6e4f26; --c-pac-top: #96703a;
   --sel-top: #ffd77a;
   --radius: 6px;
-  --img-h: 58px;
+  --img-h: 66px;
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
@@ -77,7 +79,8 @@ main { flex: 1; display: flex; min-height: 0; }
   padding-right: 12px; border-right: 2px solid #e8edf2;
   min-width: 0;
 }
-.col { flex: 1 1 0; min-width: 112px; display: flex; flex-direction: column; gap: 10px; }
+/* 卡片定宽 150px(与右区一致,换国家/兵种页宽度不变);列内间距统一 10px */
+.col { flex: none; width: 150px; display: flex; flex-direction: column; gap: 10px; }
 .premium {
   flex: 0 0 clamp(300px, 26vw, 480px);
   display: flex; flex-wrap: wrap; gap: 10px; align-content: flex-start;
@@ -87,7 +90,7 @@ main { flex: 1; display: flex; min-height: 0; }
 
 /* ── 载具卡(游戏质感) ── */
 .card {
-  position: relative; width: 100%; min-width: 112px;
+  position: relative; width: 100%;
   border: 1px solid var(--c-res-border);
   border-top: 2px solid var(--c-res-top);
   border-radius: var(--radius);
@@ -119,6 +122,11 @@ main { flex: 1; display: flex; min-height: 0; }
   position: relative;
   font-size: 12px; margin-top: 4px; height: 17px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* 缴获/外国载具:名前本树国籍小国旗(游戏 ▀▅▄▃ 块字符标记的还原,v4.7) */
+.card .flg {
+  font-size: 11px; line-height: 1; margin-right: 2px;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
 }
 .card .crp { position: relative; font-size: 11px; color: #b8c6cf; margin-top: 1px; white-space: nowrap; }
 .card .tag {
@@ -152,8 +160,9 @@ main { flex: 1; display: flex; min-height: 0; }
 .card.sel .selmark { display: flex; }
 
 /* ── 文件夹:顶层=真实卡片,背后垫同款空卡壳(游戏样式) ── */
-.folder { position: relative; z-index: 1; width: 100%; min-width: 112px; cursor: pointer; user-select: none; }
-.folder .fstack { position: relative; margin-bottom: 10px; }
+.folder { position: relative; z-index: 1; width: 100%; cursor: pointer; user-select: none; }
+/* v4.7:壳层最大下探 8px < 列间距 10px,fstack 不再加额外外边距(文件夹下列卡与邻列对齐) */
+.folder .fstack { position: relative; }
 .folder .fstack > .card { position: relative; z-index: 2; }
 .folder .fshell {
   position: absolute; left: 0; top: 0; width: 100%; height: 100%;
@@ -189,12 +198,12 @@ main { flex: 1; display: flex; min-height: 0; }
 }
 .folder.open .folding-panel { display: block; }
 .folding-panel .card + .card { margin-top: 8px; }
-/* 面纱:半透明压暗+轻模糊(可见但不活跃;用户验收:不能完全遮黑) */
+/* 面纱:v4.7 更轻——压暗 38% + 微模糊 2px,展开文件夹时背景文字仍可辨认 */
 #veil {
   position: fixed; inset: 0; z-index: 999;
-  background: rgba(8, 12, 14, .55);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  background: rgba(8, 12, 14, .38);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
   opacity: 0; pointer-events: none;
   transition: opacity .2s ease;
 }

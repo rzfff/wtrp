@@ -1,5 +1,6 @@
-/* /wtrp/ v4.1 —— 单页研发点计算器前端逻辑(CSP 安全:无内联脚本/样式,事件全委托)
+/* /wtrp/ v4.7 —— 单页研发点计算器前端逻辑(CSP 安全:无内联脚本/样式,事件全委托)
  * 依赖 calc.js 的 WTCalc。设计语言参照 blind-thunder.wiki wt-tree。
+ * v4.7:缴获/外国载具名前渲染本树国籍小国旗(游戏 ▀▅▄ 块字符标记,catalog 的 captured 字段)。
  */
 (function () {
   "use strict";
@@ -7,6 +8,9 @@
   const CLS_ZH = { army: "陆战", aviation: "空战", helicopter: "直升机", bluewater: "蓝水", coastal: "海岸" };
   const CLS_ORDER = ["army", "aviation", "helicopter", "bluewater", "coastal"];
   const AVAIL_ZH = { premium: "金币", pack: "礼包", marketplace: "市场", squadron: "联队", event: "活动", special: "特殊" };
+  // 缴获/外国载具名前的本树国籍小国旗(游戏内 ▀▅▄▃▂ 块字符经 catalog captured 标记还原)
+  const NAT_FLAG = { usa: "🇺🇸", germany: "🇩🇪", ussr: "🇷🇺", britain: "🇬🇧", japan: "🇯🇵",
+                     china: "🇨🇳", france: "🇫🇷", italy: "🇮🇹", sweden: "🇸🇪", israel: "🇮🇱" };
   const CLS_ICON = { army: "陆", aviation: "空", helicopter: "直", bluewater: "舰", coastal: "艇" };
   const SEL_KEY = "wtrp4.selected";
 
@@ -218,7 +222,8 @@
     d.dataset.id = n.id;
     d.dataset.name = n.name.toLowerCase();
     const tag = n.availability !== "researchable" ? `<span class="tag">${AVAIL_ZH[n.availability] || "特殊"}</span>` : "";
-    d.innerHTML = `${tag}${imgPh(n)}<div class="cname">${esc(n.name)}</div><div class="crp">${costText(n)}</div><div class="selmark">✓</div>`;
+    const flg = n.captured ? `<span class="flg">${NAT_FLAG[n.nation] || ""}</span>` : "";
+    d.innerHTML = `${tag}${imgPh(n)}<div class="cname">${flg}${esc(n.name)}</div><div class="crp">${costText(n)}</div><div class="selmark">✓</div>`;
     return d;
   }
 
@@ -331,10 +336,11 @@
       row.className = "prow";
       const isRes = n.availability === "researchable";
       const tag = isRes ? "" : `<span class="tag">${AVAIL_ZH[n.availability] || "特殊"}</span>`;
+      const flg = n.captured ? `<span class="flg">${NAT_FLAG[n.nation] || ""}</span>` : "";
       const exp = state.expanded.has(id);
       row.innerHTML = `
         <div class="top">
-          ${tag}<span class="pname" title="${esc(n.name)}">${esc(n.name)}</span>
+          ${tag}<span class="pname" title="${esc(n.name)}">${flg}${esc(n.name)}</span>
           <span class="pcost">${costText(n)}</span>
           <span class="pbtns">
             <button type="button" class="iconbtn" data-act="chain">${exp ? "▾ 链" : "▸ 链"}</button>

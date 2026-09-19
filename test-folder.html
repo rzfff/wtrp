@@ -67,6 +67,14 @@
           if (hs.size > 5) break;
         }
         g.cardHeights = [...hs];
+        // v4.7:列内相邻卡间距一致性(文件夹不再额外下挤,全部应=列 gap 10px)
+        const colGaps = new Set();
+        for (const col of document.querySelectorAll("#tree .col")) {
+          const kids = [...col.children].filter(k => k.getBoundingClientRect().height > 0);
+          const rect = kids.map(k => k.getBoundingClientRect());
+          for (let i = 1; i < rect.length; i++) colGaps.add(Math.round(rect[i].top - rect[i - 1].bottom));
+        }
+        g.colGaps = [...colGaps];
         const out = document.createElement("div");
         out.id = "geom";
         out.textContent = "GEOM=" + JSON.stringify(g);

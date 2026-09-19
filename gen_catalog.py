@@ -3,10 +3,13 @@
 
 v4 修复(v3 用户验收失败项的根因):
   1. 名字清块字符:names-zh 里 259 条带游戏"缴获"标记(▀▅▄▃▂ 等 U+2580-259F),统一剥除;
+     v4.7 起不丢信息:有标记的节点记 captured=true,前端换成本树国籍小国旗(游戏原样);
   2. 缺图治理:image 仅在实际存在 png 时给出,否则 null,前端不再出现裂图;
   3. 分区:zone 由 availability 决定(游戏右区=非 researchable 全部),不再误信列号;
   4. 文件夹语义:组成员的前置=组根的前置(游戏"任选其一"),后继车从组内每一辆连边,
-     研发链计算取 min,不再虚高。
+     研发链计算取 min,不再虚高;
+  5. v4.7 活动别名去重:shop.blkx 同树并存 X 与 X_event 是历年活动重复上架(如德国
+     一战车),只保留基础条目;无基础的 _event(英一战车/F-4E)保留并回退基础图。
 
 输入:
   WTAPI_DIST/vehicles-full.json   (经济字段全量)
@@ -37,6 +40,7 @@ EFFICIENCY = {
     "target_above": {"0": 1.0, "1": 1.0, "2": 0.4, "3": 0.3}, "target_above_default": 0.2,
     "target_below": {"1": 0.9, "2": 0.3, "3": 0.1}, "target_below_default": 0.05,
 }
+BLOCK_CHARS = re.compile(r"[▀-▟]")
 JUNK_CHARS = re.compile(r"[\u0000-\u001F\u2580-\u259F\u2419\u2421]")
 
 
@@ -60,6 +64,13 @@ def main():
         version = cdata["version"]
         for branch, entries in cdata["branches"].items():
             cls = CLASS_MAP[branch]
+            # 历年活动重复上架去重:同树内 X_event 与基础条目并存时只留基础条目(有图);
+            # 无基础的 _event(如 uk_garford_putilov_event、f_4e_event)保留,图回退基础名
+            tree_ids = {e["id"] for e in entries}
+            before = len(entries)
+            entries = [e for e in entries
+                       if not (e["id"].endswith("_event") and e["id"][:-6] in tree_ids)]
+            stats["event_dupe"] = stats.get("event_dupe", 0) + (before - len(entries))
             for e in entries:
                 nid[e["id"]] = next_id
                 next_id += 1
@@ -68,10 +79,15 @@ def main():
                 ident = e["id"]
                 v = veh.get(ident)
                 raw = names.get(ident.lower()) or ident.replace("_", " ")
+                captured = bool(raw and BLOCK_CHARS.search(raw))
                 disp = clean(raw)
                 if disp != raw:
                     stats["cleaned"] += 1
                 img_name = f"{ident.lower()}.png"
+                if img_name not in imgs and ident.endswith("_event"):
+                    base = f"{ident[:-6].lower()}.png"
+                    # f_4e_event → f_4e 无图时再试 f-4e(美机连字符命名)
+                    img_name = base if base in imgs else base.replace("_", "-")
                 img = f"/wtapi/assets/images/{img_name}" if img_name in imgs else None
                 if img is None:
                     stats["noimg"] += 1
@@ -96,6 +112,8 @@ def main():
                 }
                 if v and v.get("realistic_br"):
                     node["br"] = round(v["realistic_br"], 1)
+                if captured:
+                    node["captured"] = True
                 tnodes.append(node)
 
             # tree_order(列×等级段内序号)+ folder_of(组根 id)
