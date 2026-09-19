@@ -23,7 +23,8 @@
 | `gen_data.py` | datamine `shop.blkx` → 每国列序数据(含 `showOnlyWhenBought` 右区标记) |
 | `gen_catalog.py` | 合并 vehicles-full + 简中名 + 图清单 → catalog.json(清块字符/缺图置空/文件夹任选连边) |
 | `validate-data.mjs` | 离线数据+计算断言(21 项,`node validate-data.mjs`) |
-| `check-wtrp.mjs` | 线上端到端验收(31 项,`node check-wtrp.mjs`) |
+| `check-wtrp.mjs` | 线上端到端验收(33 项,`node check-wtrp.mjs`) |
+| `smoke-render.mjs` | 渲染级冒烟(18 项,jsdom 真跑页面;`node smoke-render.mjs [--live]`,需 devDependency jsdom@22) |
 
 ## 更新流程(WT 大版本)
 
@@ -31,7 +32,7 @@
 2. `PYTHONIOENCODING=utf-8 python gen_data.py && python gen_catalog.py`
 3. `node validate-data.mjs` 全绿。
 4. 打包 `index.html style.css app.js calc.js data/catalog.json` 上服务器 `/opt/services/wtrp/`。
-5. `node check-wtrp.mjs` 全绿。
+5. 前端有改动先 bump index.html 里三件套引用的 `?v=` 版本号(防浏览器 30 天缓存毒化;nginx /wtrp/ 已固定 no-cache 双保险),`node check-wtrp.mjs` + `node smoke-render.mjs --live` 全绿。
 
 ## 数据要点(踩坑记录)
 
