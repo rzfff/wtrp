@@ -1,5 +1,5 @@
-/* /wtrp/ v4 —— 单页研发点计算器前端逻辑
- * 依赖 calc.js 的 WTCalc(研发链计算核心)。
+/* /wtrp/ v4.1 —— 单页研发点计算器前端逻辑(CSP 安全:无内联脚本/样式,事件全委托)
+ * 依赖 calc.js 的 WTCalc。设计语言参照 blind-thunder.wiki wt-tree。
  */
 (function () {
   "use strict";
@@ -13,17 +13,18 @@
   const state = {
     catalog: null, ix: null,
     nation: "usa", cls: "army",
-    selected: new Map(),   // id -> true,保持点选顺序
-    expanded: new Set(),   // 面板中展开研发链的 id
+    selected: new Map(),
+    expanded: new Set(),
     search: "",
     needCache: new Map(),
+    openFolder: null, // 当前展开的文件夹根 id
   };
 
   const el = {};
   document.addEventListener("DOMContentLoaded", init);
 
   async function init() {
-    ["nations", "classes", "search", "tree", "tree-wrap", "popover", "p-title", "p-list", "p-foot", "p-clear", "ver", "foot-ver"]
+    ["nations", "classes", "search", "tree", "tree-wrap", "p-title", "p-list", "p-foot", "p-clear", "ver", "foot-ver"]
       .forEach(id => (el[id.replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = document.getElementById(id)));
     const res = await fetch("data/catalog.json", { cache: "no-cache" });
     if (!res.ok) throw new Error("catalog 加载失败: " + res.status);
@@ -38,9 +39,20 @@
     el.search.addEventListener("input", () => { state.search = el.search.value.trim().toLowerCase(); applySearch(); });
     el.pClear.addEventListener("click", clearAll);
     el.tree.addEventListener("click", onTreeClick);
-    document.addEventListener("click", e => { if (!e.target.closest(".pop") && !e.target.closest(".folder")) closePop(); });
-    document.addEventListener("keydown", e => { if (e.key === "Escape") closePop(); });
-    el.treeWrap.addEventListener("scroll", closePop);
+    // 图片加载失败 → 占位符(捕获阶段,替代被 CSP 禁用的内联 onerror)
+    document.addEventListener("error", e => {
+      const t = e.target;
+      if (t && t.tagName === "IMG") {
+        const ph = t.parentNode;
+        t.remove();
+        if (ph) { ph.classList.add("noimg"); ph.textContent = CLS_ICON[state.cls] || "?"; }
+      }
+    }, true);
+    document.addEventListener("click", e => {
+      if (!e.target.closest(".folder")) closeFolder();
+    });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeFolder(); });
+    el.treeWrap.addEventListener("scroll", closeFolder);
     window.addEventListener("hashchange", () => { loadHash(); buildClassTabs(); renderTree(); });
     renderTree();
     renderPanel();
@@ -64,13 +76,17 @@
     if (n.ge_cost) return fmt(n.ge_cost) + " 金鹰";
     return "活动/礼品";
   }
+  function imgPh(n) {
+    if (!n.image) return `<div class="ph noimg">${CLS_ICON[n.class] || "?"}</div>`;
+    return `<div class="ph"><img src="${n.image}" alt="" loading="lazy"></div>`;
+  }
 
-  /* ---------- 状态持久化 ---------- */
+  /* ---------- 持久化 ---------- */
   function loadSelected() {
     try {
       const arr = JSON.parse(localStorage.getItem(SEL_KEY) || "[]");
       arr.forEach(id => { if (byId(id)) state.selected.set(id, true); });
-    } catch (e) { /* 忽略损坏存档 */ }
+    } catch (e) {}
   }
   function saveSelected() {
     try { localStorage.setItem(SEL_KEY, JSON.stringify([...state.selected.keys()])); } catch (e) {}
@@ -98,8 +114,7 @@
       b.addEventListener("click", () => {
         if (state.nation === n.slug) return;
         state.nation = n.slug;
-        const first = CLS_ORDER.find(c => state.catalog.trees.some(t => t.nation === n.slug && t.class === c));
-        state.cls = first || "army";
+        state.cls = CLS_ORDER.find(c => state.catalog.trees.some(t => t.nation === n.slug && t.class === c)) || "army";
         buildNationTabs(); buildClassTabs(); renderTree(); setHash();
       });
       el.nations.appendChild(b);
@@ -123,19 +138,14 @@
   }
 
   /* ---------- 科技树 ---------- */
-  function treeNodes() {
-    return state.catalog.nodes.filter(n => n.nation === state.nation && n.class === state.cls);
-  }
-
   function renderTree() {
-    closePop();
-    const nodes = treeNodes();
+    closeFolder();
+    const nodes = state.catalog.nodes.filter(n => n.nation === state.nation && n.class === state.cls);
     const tree = state.catalog.trees.find(t => t.nation === state.nation && t.class === state.cls);
     const colCount = tree ? tree.research_column_count : 1;
     const ranks = [...new Set(nodes.map(n => n.rank))].sort((a, b) => a - b);
     const roman = r => ["0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"][r] || r;
 
-    // 研究区:(rank,col) -> 节点(按 tree_order);右区:rank -> 节点
     const cellMap = new Map(), premMap = new Map();
     for (const n of nodes) {
       if (n.zone === "research") {
@@ -165,7 +175,9 @@
         const col = document.createElement("div");
         col.className = "col";
         const cell = cellMap.get(r + ":" + c);
-        if (cell) for (const unit of clusterFolder(cell)) col.appendChild(unit.members.length ? folderEl(unit) : cardEl(unit.root));
+        if (cell) for (const unit of clusterFolder(cell)) {
+          col.appendChild(unit.members.length ? folderEl(unit) : cardEl(unit.root));
+        }
         research.appendChild(col);
       }
       band.appendChild(research);
@@ -182,7 +194,6 @@
     applySearch();
   }
 
-  /* 同格内聚文件夹:成员挂到组根下 */
   function clusterFolder(cellNodes) {
     const units = [], byRoot = new Map();
     for (const n of cellNodes) {
@@ -197,18 +208,13 @@
     return units;
   }
 
-  function imgHTML(n) {
-    if (!n.image) return `<div class="ph">${CLS_ICON[n.class] || "?" }</div>`;
-    return `<div class="ph" style="background-image:url('${n.image}')"></div>`;
-  }
-
   function cardEl(n) {
     const d = document.createElement("div");
     d.className = "card av-" + n.availability + (state.selected.has(n.id) ? " sel" : "");
     d.dataset.id = n.id;
     d.dataset.name = n.name.toLowerCase();
     const tag = n.availability !== "researchable" ? `<span class="tag">${AVAIL_ZH[n.availability] || "特殊"}</span>` : "";
-    d.innerHTML = `${tag}${imgHTML(n)}<div class="cname">${esc(n.name)}</div><div class="crp">${costText(n)}</div>`;
+    d.innerHTML = `${tag}${imgPh(n)}<div class="cname">${esc(n.name)}</div><div class="crp">${costText(n)}</div><div class="selmark">✓</div>`;
     return d;
   }
 
@@ -218,60 +224,88 @@
     d.className = "folder";
     d.dataset.root = unit.root.id;
     d.dataset.name = all.map(m => m.name.toLowerCase()).join(" ");
-    const withImg = all.filter(m => m.image).slice(0, 3);
-    const stacks = withImg.map(m => `<div class="stk" style="background-image:url('${m.image}')"></div>`).join("")
-      || `<div class="stk empty">${CLS_ICON[unit.root.class] || "?"}</div>`;
+    const layers = all.filter(m => m.image).slice(0, 3);
+    let stacks;
+    if (layers.length) {
+      stacks = layers.map(m => `<div class="stk"><img src="${m.image}" alt="" loading="lazy"></div>`).join("");
+    } else {
+      stacks = `<div class="stk noimg">${CLS_ICON[unit.root.class] || "?"}</div>`;
+    }
     d.innerHTML = `${stacks}<div class="cbadge">+${unit.members.length}</div><div class="cname">${esc(unit.root.name)}</div>`;
-    return d;
-  }
-
-  /* ---------- 文件夹弹层 ---------- */
-  function openPop(rootId, anchorEl) {
-    const pop = el.popover;
-    const members = state.catalog.nodes.filter(n => n.folder_of === rootId && n.id !== rootId);
-    const all = [byId(rootId), ...members];
-    pop.innerHTML = `
-      <div class="ptitle"><span>文件夹 · 任选其一即可解锁后续</span><button type="button" class="btn" data-act="all">全选</button></div>
-      <div class="pitems"></div>`;
-    const box = pop.querySelector(".pitems");
-    for (const n of all) box.appendChild(cardEl(n));
-    pop.querySelector("[data-act=all]").addEventListener("click", () => {
+    // 就地展开面板
+    const panel = document.createElement("div");
+    panel.className = "fold-panel";
+    const head = document.createElement("div");
+    head.className = "fp-head";
+    head.innerHTML = `<span class="fp-title">文件夹 · 任选其一</span>`;
+    const allBtn = document.createElement("button");
+    allBtn.type = "button";
+    allBtn.className = "btn";
+    allBtn.textContent = "全选";
+    allBtn.addEventListener("click", ev => {
+      ev.stopPropagation();
       all.forEach(n => state.selected.set(n.id, true));
       afterSelectionChange();
     });
-    pop.classList.remove("hidden");
-    const r = anchorEl.getBoundingClientRect();
-    const pw = pop.offsetWidth, ph = pop.offsetHeight;
-    let x = Math.min(r.left, window.innerWidth - pw - 8);
-    let y = r.bottom + 6;
-    if (y + ph > window.innerHeight - 8) y = Math.max(8, r.top - ph - 6);
-    pop.style.left = Math.max(8, x) + "px";
-    pop.style.top = y + "px";
+    head.appendChild(allBtn);
+    const items = document.createElement("div");
+    items.className = "fp-items";
+    for (const n of all) items.appendChild(cardEl(n));
+    panel.appendChild(head);
+    panel.appendChild(items);
+    d.appendChild(panel);
+    return d;
   }
-  function closePop() { el.popover.classList.add("hidden"); }
+
+  function closeFolder() {
+    if (state.openFolder == null) return;
+    const prev = el.tree.querySelector('.folder[data-root="' + state.openFolder + '"] .fold-panel');
+    if (prev) prev.classList.remove("open", "flip");
+    state.openFolder = null;
+  }
+
+  function toggleFolder(folderEl_) {
+    const rootId = Number(folderEl_.dataset.root);
+    if (state.openFolder === rootId) { closeFolder(); return; }
+    closeFolder();
+    const panel = folderEl_.querySelector(".fold-panel");
+    if (!panel) return;
+    // 右缘防溢出:向左翻开
+    const wrapRight = el.treeWrap.getBoundingClientRect().right;
+    const r = folderEl_.getBoundingClientRect();
+    if (r.left + 400 > wrapRight) panel.classList.add("flip");
+    panel.classList.add("open");
+    state.openFolder = rootId;
+  }
 
   /* ---------- 交互 ---------- */
   function onTreeClick(e) {
+    // 文件夹面板内的卡片:只切换选中,不关面板
+    const panelCard = e.target.closest(".fold-panel .card");
+    if (panelCard) {
+      toggleSelect(Number(panelCard.dataset.id));
+      return;
+    }
     const folder = e.target.closest(".folder");
-    if (folder) { openPop(Number(folder.dataset.root), folder); return; }
+    if (folder) { toggleFolder(folder); return; }
     const card = e.target.closest(".card");
-    if (!card || card.closest(".pop")) return;
-    const id = Number(card.dataset.id);
+    if (card) toggleSelect(Number(card.dataset.id));
+  }
+
+  function toggleSelect(id) {
     if (state.selected.has(id)) {
       state.selected.delete(id);
       state.expanded.delete(id);
     } else {
       state.selected.set(id, true);
-      if (state.selected.size === 1) state.expanded.add(id); // 单选自动展开研发链
+      if (state.selected.size === 1) state.expanded.add(id);
     }
     afterSelectionChange();
   }
 
   function afterSelectionChange() {
     saveSelected();
-    // 局部刷新选中态,避免整树重建丢失滚动位置
     el.tree.querySelectorAll(".card").forEach(c => c.classList.toggle("sel", state.selected.has(Number(c.dataset.id))));
-    el.popover.querySelectorAll(".card").forEach(c => c.classList.toggle("sel", state.selected.has(Number(c.dataset.id))));
     renderPanel();
   }
 
@@ -295,7 +329,7 @@
     const ids = [...state.selected.keys()];
     el.pTitle.textContent = `已选载具 (${ids.length})`;
     if (!ids.length) {
-      el.pList.innerHTML = `<div class="p-empty">点击左侧科技树中的载具加入计算;<br>文件夹点开可选组内成员。<br>单选一辆可查看完整研发链。</div>`;
+      el.pList.innerHTML = `<div class="p-empty">点击科技树中的载具加入计算;<br>点击文件夹就地展开、选组内成员;<br>单选一辆自动展开完整研发链。</div>`;
       el.pFoot.innerHTML = "";
       return;
     }
@@ -310,10 +344,10 @@
       row.innerHTML = `
         <div class="top">
           ${tag}<span class="pname" title="${esc(n.name)}">${esc(n.name)}</span>
-          <span class="pcost ${isRes ? "" : "ge"}">${costText(n)}</span>
+          <span class="pcost">${costText(n)}</span>
           <span class="pbtns">
-            <button type="button" class="iconbtn" data-act="chain" title="研发链">${exp ? "▾ 链" : "▸ 链"}</button>
-            <button type="button" class="iconbtn" data-act="rm" title="移除">✕</button>
+            <button type="button" class="iconbtn" data-act="chain">${exp ? "▾ 链" : "▸ 链"}</button>
+            <button type="button" class="iconbtn" data-act="rm">✕</button>
           </span>
         </div>`;
       row.querySelector('[data-act="rm"]').addEventListener("click", () => {
