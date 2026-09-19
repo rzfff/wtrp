@@ -1,5 +1,6 @@
-/* /wtrp/ v4.9 —— 单页研发点计算器前端逻辑(CSP 安全:无内联脚本/样式,事件全委托)
+/* /wtrp/ v5.0 —— 单页研发点计算器前端逻辑(CSP 安全:无内联脚本/样式,事件全委托)
  * 依赖 calc.js 的 WTCalc。设计语言参照 blind-thunder.wiki wt-tree。
+ * v5.0:合计口径=仅所选载具自身(不含前置,calc.js total() 改语义);卡片再加大加高。
  * v4.9:车名行右端=战斗权重 BR(分房;catalog br 字段,源自 vehicles-full realistic_br);
  *       文件夹 +N 徽章样式位置调整(右下角,CSS 侧)。
  * v4.8:缴获/外国载具名前=游戏原生国家旗标(flags/<nation>.svg,取自 datamine gameuiskin,
@@ -370,9 +371,9 @@
 
     const t = WTCalc.total(state.ix, ids);
     el.pFoot.innerHTML = `
-      <div class="row"><span>研发点合计(共享前置已去重)</span><span class="big">${fmt(t.rp)}</span></div>
+      <div class="row"><span>研发点合计(仅所选载具,不含前置)</span><span class="big">${fmt(t.rp)}</span></div>
       ${t.ge ? `<div class="row"><span>金鹰合计(高级载具)</span><span class="big">${fmt(t.ge)}</span></div>` : ""}
-      <div class="note">共 ${ids.length} 辆,研发链涉及 ${t.counted.length} 辆(含前置)</div>`;
+      <div class="note">共 ${ids.length} 辆;单辆的完整研发链(含前置)点「链」查看</div>`;
   }
 
   function chainEl(id) {

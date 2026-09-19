@@ -37,10 +37,10 @@ check("style.css 花括号配平", openB === closeB, `${openB}/${closeB}`);
 for (const sel of [".folder .fstack", ".folder.open .folding-panel", ".card .ph img", ".research", ".premium", ".folder .fshell", "#veil"]) {
   check("style.css 含选择器 " + sel, css.includes(sel));
 }
-// v4.9:车名行右端 BR 徽标 / 卡片加长 / 徽章右下角
-check("style.css v4.9 图片区 --img-h:78px", css.includes("--img-h: 78px"));
-check("style.css v4.9 卡片全站定宽 190px", css.includes("width: 190px") && !css.includes("width: 170px"));
-check("style.css v4.9 金币区 max-content(右缘空隙消除)", css.includes("width: max-content"));
+// v5.0:图区 92 / 卡片 210 / 车名行右端 BR 徽标 / 徽章右下角
+check("style.css v5.0 图片区 --img-h:92px", css.includes("--img-h: 92px"));
+check("style.css v5.0 卡片全站定宽 210px", css.includes("width: 210px") && !css.includes("width: 190px"));
+check("style.css v5.0 金币区 max-content(右缘空隙消除)", css.includes("width: max-content"));
 check("style.css v4.9 车名行 flex+.nm+.br 徽标", css.includes(".cname .nm") && css.includes(".cname .br"));
 check("style.css v4.9 +N 徽章右下角(bottom:2px)", /cbadge[^}]*bottom: 2px/.test(css));
 check("style.css v4.7 面纱更轻(.38+blur2px)", css.includes("rgba(8, 12, 14, .38)") && css.includes("blur(2px)"));
@@ -121,6 +121,8 @@ if (folders.length) {
     check("点成员卡 → 侧栏已选=1(面板不收起)", $("#p-title").textContent.includes("(1)") && f.classList.contains("open"), $("#p-title").textContent);
     check("侧栏合计出现", /研发点合计|金鹰合计/.test($("#p-foot").textContent));
   }
+check("研发点合计文案=仅所选不含前置(v5.0)", /研发点合计\(仅所选载具,不含前置\)/.test($("#p-foot").textContent) && !/共享前置已去重/.test($("#p-foot").textContent),
+  $("#p-foot").textContent.slice(0, 60));
   // 点面纱 → 收起
   $("#veil").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
   await new Promise(r => setTimeout(r, 30));

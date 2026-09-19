@@ -4,6 +4,7 @@
  *   科技树车的前置 = 其父节点;文件夹组内每辆都向"后继车"连边(游戏"任选其一"),
  *   故单车取 min 路径即等价于"文件夹内挑最便宜的研发"。
  *   非 researchable(金币/活动/市场/联队/礼包)不参与研发链,只计金鹰。
+ * v5.0:total() 口径改为仅所选载具自身(不含前置);need() 链路保持含前置(单车"研发链"展示用)。
  */
 (function (root, factory) {
   const M = factory();
@@ -58,28 +59,21 @@
     return cost(id);
   }
 
-  /* 多选合计:共享前置只计一次。返回 {rp, ge, counted, per:[{id, added, addedGe}]} */
+  /* 多选合计(v5.0 口径:仅所选载具自身的研发点/金鹰,不含前置——用户验收:
+     "选了哪几个载具就算哪几个的合计")。返回 {rp, ge, counted, per:[{id, added, addedGe}]} */
   function total(ix, ids) {
-    const counted = new Set();
     let rp = 0, ge = 0;
-    const per = [];
+    const per = [], counted = [];
     for (const id of ids) {
       const n = ix.byId.get(id);
       if (!n) continue;
-      const c = need(ix, id);
-      let added = 0, addedGe = 0;
-      for (const vid of c.path) {
-        if (counted.has(vid)) continue;
-        counted.add(vid);
-        const vn = ix.byId.get(vid);
-        if (!vn) continue;
-        if (vn.availability === "researchable") added += vn.rp_cost || 0;
-        else addedGe += vn.ge_cost || 0;
-      }
+      const added = n.availability === "researchable" ? (n.rp_cost || 0) : 0;
+      const addedGe = n.availability !== "researchable" ? (n.ge_cost || 0) : 0;
       rp += added; ge += addedGe;
+      counted.push(id);
       per.push({ id, added, addedGe });
     }
-    return { rp, ge, counted: Array.from(counted), per };
+    return { rp, ge, counted, per };
   }
 
   return { buildIndex, need, total };
