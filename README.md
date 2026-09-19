@@ -23,7 +23,7 @@
 | `gen_data.py` | datamine `shop.blkx` → 每国列序数据(含 `showOnlyWhenBought` 右区标记) |
 | `gen_catalog.py` | 合并 vehicles-full + 简中名 + 图清单 → catalog.json(清块字符/缺图置空/文件夹任选连边) |
 | `validate-data.mjs` | 离线数据+计算断言(21 项,`node validate-data.mjs`) |
-| `check-wtrp.mjs` | 线上端到端验收(26 项,`node check-wtrp.mjs`) |
+| `check-wtrp.mjs` | 线上端到端验收(31 项,`node check-wtrp.mjs`) |
 
 ## 更新流程(WT 大版本)
 
@@ -43,7 +43,7 @@
 
 ## 鸣谢
 
-样式参考 [GrindTracker](https://github.com/ItsMeRaijiN/GrindTracker-WarThunder_RP_Calculator),布局参考 [WT-Tech-Tree-Maker](https://github.com/przemyslaw-zan/WT-Tech-Tree-Maker)(MIT)。数据源于 Gaijin 官方 datamine 与社区简中翻译表。
+设计语言参照 [blind-thunder.wiki](https://blind-thunder.wiki/) 的 wt-tree(游戏卡片质感/文件夹就地展开/右区分隔),并感谢 [GrindTracker](https://github.com/ItsMeRaijiN/GrindTracker-WarThunder_RP_Calculator) 与 [WT-Tech-Tree-Maker](https://github.com/przemyslaw-zan/WT-Tech-Tree-Maker)(MIT) 的功能与布局参考。数据源于 Gaijin 官方 datamine 与社区简中翻译表。
 
 ## 许可
 
