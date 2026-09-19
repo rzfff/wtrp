@@ -231,7 +231,7 @@
     } else {
       stacks = `<div class="stk noimg">${CLS_ICON[unit.root.class] || "?"}</div>`;
     }
-    d.innerHTML = `${stacks}<div class="cbadge">+${unit.members.length}</div><div class="cname">${esc(unit.root.name)}</div>`;
+    d.innerHTML = `<div class="fstack">${stacks}</div><div class="cbadge">+${unit.members.length}</div><div class="cname">${esc(unit.root.name)}</div>`;
     // 就地展开面板
     const panel = document.createElement("div");
     panel.className = "fold-panel";
@@ -286,6 +286,8 @@
       toggleSelect(Number(panelCard.dataset.id));
       return;
     }
+    // 面板背景(非卡片区域)点击:只关面板,不视为切换文件夹
+    if (e.target.closest(".fold-panel")) { closeFolder(); return; }
     const folder = e.target.closest(".folder");
     if (folder) { toggleFolder(folder); return; }
     const card = e.target.closest(".card");
