@@ -37,9 +37,10 @@ check("style.css 花括号配平", openB === closeB, `${openB}/${closeB}`);
 for (const sel of [".folder .fstack", ".folder.open .folding-panel", ".card .ph img", ".research", ".premium", ".folder .fshell", "#veil"]) {
   check("style.css 含选择器 " + sel, css.includes(sel));
 }
-// v4.7:图片区加高 / 卡片定宽(换页不变) / 面纱更轻 / fstack 无额外外边距(对齐)
-check("style.css v4.7 图片区加高 --img-h:66px", css.includes("--img-h: 66px"));
-check("style.css v4.7 卡片全站定宽 150px", css.includes("width: 150px"));
+// v4.8:图片区加高 / 卡片加宽 / 金币区随内容收紧 / 面纱更轻 / fstack 无额外外边距(对齐)
+check("style.css v4.8 图片区 --img-h:78px", css.includes("--img-h: 78px"));
+check("style.css v4.8 卡片全站定宽 170px", css.includes("width: 170px"));
+check("style.css v4.8 金币区 max-content(右缘空隙消除)", css.includes("width: max-content"));
 check("style.css v4.7 面纱更轻(.38+blur2px)", css.includes("rgba(8, 12, 14, .38)") && css.includes("blur(2px)"));
 check("style.css v4.7 fstack 无额外外边距", !css.includes("margin-bottom: 10px"));
 
@@ -140,10 +141,11 @@ check("分体防空发射车在研究区文件夹内(不在右区)",
   lchCard ? (lchCard.closest(".folding-panel") ? "in-panel" : "游离:" + (lchCard.closest(".premium") ? "右区" : "列")) : "未渲染");
 check("发射车标组合单元", !!(lchCard && lchCard.textContent.includes("组合单元")));
 
-// v4.7:缴获/外国载具名前渲染本树国籍国旗(▃→🇺🇸,catalog captured 字段)
+// v4.8:缴获/外国载具名前=游戏原生国家旗标 img(与 blind-thunder 同款)
 const capCard = $$("#tree .card").find(c => (c.dataset.name || "").includes("斯图亚特 vi"));
-check("缴获载具名前渲染国旗 span.flg", !!capCard && !!capCard.querySelector(".cname .flg"),
-  capCard ? (capCard.querySelector(".cname .flg") ? capCard.querySelector(".cname .flg").textContent : "无 flg") : "未渲染");
+check("缴获载具名前渲染旗标 img.flg[src*=flags/]", !!capCard && !!capCard.querySelector('.cname img.flg[src*="flags/"]'),
+  capCard ? (capCard.querySelector("img.flg") ? capCard.querySelector("img.flg").getAttribute("src") : "无 flg") : "未渲染");
+check("兵种页签=远洋海军/近岸海军(v4.8 改名)", $("#classes").textContent.includes("远洋海军") && $("#classes").textContent.includes("近岸海军"));
 
 console.log(bad === 0 ? "\n渲染冒烟全部通过 ✅(" + (LIVE ? "线上" : "本地") + ")" : `\n${bad} 项未通过 ❌`);
 process.exit(bad === 0 ? 0 : 1);

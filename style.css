@@ -1,8 +1,9 @@
-/* /wtrp/ v4.7 —— 单页研发点计算器
+/* /wtrp/ v4.8 —— 单页研发点计算器
  * 设计语言参照 blind-thunder.wiki 的 wt-tree:游戏卡片质感(底色+顶部色条+点阵纹理),
  * 选中=色条变金+斜纹叠层;文件夹就地展开面板;
- * v4.7:卡片全站定宽 150px(换国家/兵种页不变)、图片区加高、列内间距统一(文件夹不再
- * 额外下挤)、面纱更轻可辨背景字、缴获/外国车名前带本树国籍小国旗(游戏 ▀▅▄ 标记还原)。
+ * v4.8:卡片加大(170px/图区 78px)、金币区随内容收紧(max-content,不再顶到右栏)、
+ * 缴获车名前缀=游戏原生国家旗标 SVG(flags/<国>.svg,datamine gameuiskin 提取);
+ * v4.7:卡片定宽(换页不变)、列内间距统一(文件夹不再额外下挤)、面纱更轻可辨背景字。
  */
 :root {
   --bg: #14191b;
@@ -20,7 +21,7 @@
   --c-pac-bg: #5a4020; --c-pac-border: #6e4f26; --c-pac-top: #96703a;
   --sel-top: #ffd77a;
   --radius: 6px;
-  --img-h: 66px;
+  --img-h: 78px;
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
@@ -79,14 +80,17 @@ main { flex: 1; display: flex; min-height: 0; }
   padding-right: 12px; border-right: 2px solid #e8edf2;
   min-width: 0;
 }
-/* 卡片定宽 150px(与右区一致,换国家/兵种页宽度不变);列内间距统一 10px */
-.col { flex: none; width: 150px; display: flex; flex-direction: column; gap: 10px; }
+/* 卡片全站定宽 170px(与右区一致,换国家/兵种页宽度不变);列内间距统一 10px */
+.col { flex: none; width: 170px; display: flex; flex-direction: column; gap: 10px; }
+/* v4.8:金币区=两列网格(宽=内容,不再按视口比例撑满——右缘大空隙消除;
+   注意不能用 flex-wrap+max-content:max-content 对 flex 容器=所有卡排一行的宽度,卡会全部挤到首行溢出) */
 .premium {
-  flex: 0 0 clamp(300px, 26vw, 480px);
-  display: flex; flex-wrap: wrap; gap: 10px; align-content: flex-start;
+  flex: none; width: max-content;
+  display: grid; grid-template-columns: repeat(2, 170px); gap: 10px;
   padding-left: 12px;
+  align-content: start;
 }
-.premium .card { width: 150px; flex: none; }
+.premium .card { width: 170px; flex: none; }
 
 /* ── 载具卡(游戏质感) ── */
 .card {
@@ -123,11 +127,10 @@ main { flex: 1; display: flex; min-height: 0; }
   font-size: 12px; margin-top: 4px; height: 17px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-/* 缴获/外国载具:名前本树国籍小国旗(游戏 ▀▅▄▃ 块字符标记的还原,v4.7) */
-.card .flg {
-  font-size: 11px; line-height: 1; margin-right: 2px;
-  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
-}
+/* 缴获/外国载具:名前游戏原生国家旗标(彩色小旗,与 blind-thunder 同款,v4.8) */
+.card .flg { height: 11px; width: auto; margin-right: 3px; border-radius: 1px; box-shadow: 0 0 0 1px #00000055; vertical-align: -1px; }
+.card .cname { font-size: 13px; }
+.card .crp { font-size: 12px; }
 .card .crp { position: relative; font-size: 11px; color: #b8c6cf; margin-top: 1px; white-space: nowrap; }
 .card .tag {
   position: absolute; top: 5px; right: 4px; z-index: 2;
@@ -250,7 +253,6 @@ main { flex: 1; display: flex; min-height: 0; }
 @media (max-width: 900px) {
   main { flex-direction: column; }
   #panel { width: auto; border-left: none; border-top: 1px solid var(--line); max-height: 40vh; }
-  .premium { flex-basis: 300px; }
 }
 
 #tree-wrap::-webkit-scrollbar, #p-list::-webkit-scrollbar { width: 10px; height: 10px; }

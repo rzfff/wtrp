@@ -1,16 +1,14 @@
-/* /wtrp/ v4.7 —— 单页研发点计算器前端逻辑(CSP 安全:无内联脚本/样式,事件全委托)
+/* /wtrp/ v4.8 —— 单页研发点计算器前端逻辑(CSP 安全:无内联脚本/样式,事件全委托)
  * 依赖 calc.js 的 WTCalc。设计语言参照 blind-thunder.wiki wt-tree。
- * v4.7:缴获/外国载具名前渲染本树国籍小国旗(游戏 ▀▅▄ 块字符标记,catalog 的 captured 字段)。
+ * v4.8:缴获/外国载具名前=游戏原生国家旗标(flags/<nation>.svg,取自 datamine gameuiskin,
+ *       与 blind-thunder 同款);兵种页签改名 远洋海军/近岸海军。
  */
 (function () {
   "use strict";
 
-  const CLS_ZH = { army: "陆战", aviation: "空战", helicopter: "直升机", bluewater: "蓝水", coastal: "海岸" };
+  const CLS_ZH = { army: "陆战", aviation: "空战", helicopter: "直升机", bluewater: "远洋海军", coastal: "近岸海军" };
   const CLS_ORDER = ["army", "aviation", "helicopter", "bluewater", "coastal"];
   const AVAIL_ZH = { premium: "金币", pack: "礼包", marketplace: "市场", squadron: "联队", event: "活动", special: "特殊" };
-  // 缴获/外国载具名前的本树国籍小国旗(游戏内 ▀▅▄▃▂ 块字符经 catalog captured 标记还原)
-  const NAT_FLAG = { usa: "🇺🇸", germany: "🇩🇪", ussr: "🇷🇺", britain: "🇬🇧", japan: "🇯🇵",
-                     china: "🇨🇳", france: "🇫🇷", italy: "🇮🇹", sweden: "🇸🇪", israel: "🇮🇱" };
   const CLS_ICON = { army: "陆", aviation: "空", helicopter: "直", bluewater: "舰", coastal: "艇" };
   const SEL_KEY = "wtrp4.selected";
 
@@ -44,12 +42,14 @@
     el.pClear.addEventListener("click", clearAll);
     el.tree.addEventListener("click", onTreeClick);
     // 图片加载失败 → 占位符(捕获阶段,替代被 CSP 禁用的内联 onerror)
+    // v4.8:只处理卡片图区(.ph)内的 img——国旗等小图失败不得毁车名
     document.addEventListener("error", e => {
       const t = e.target;
-      if (t && t.tagName === "IMG") {
-        const ph = t.parentNode;
+      const ph = t && t.tagName === "IMG" && t.parentNode;
+      if (ph && ph.classList && ph.classList.contains("ph")) {
         t.remove();
-        if (ph) { ph.classList.add("noimg"); ph.textContent = CLS_ICON[state.cls] || "?"; }
+        ph.classList.add("noimg");
+        ph.textContent = CLS_ICON[state.cls] || "?";
       }
     }, true);
     // 面纱(blind-thunder public_mask 同款):开文件夹时压暗整树,点面纱收起
@@ -79,6 +79,10 @@
       case "squadron": return "联队";
       default: return "活动/绝版";
     }
+  }
+  // 缴获/外国载具:名前挂游戏原生国家旗标(与 blind-thunder 同款;catalog captured 标记)
+  function flgImg(n) {
+    return n.captured ? `<img class="flg" src="flags/${n.nation}.svg" alt="">` : "";
   }
   function imgPh(n) {
     if (!n.image) return `<div class="ph noimg">${CLS_ICON[n.class] || "?"}</div>`;
@@ -222,8 +226,7 @@
     d.dataset.id = n.id;
     d.dataset.name = n.name.toLowerCase();
     const tag = n.availability !== "researchable" ? `<span class="tag">${AVAIL_ZH[n.availability] || "特殊"}</span>` : "";
-    const flg = n.captured ? `<span class="flg">${NAT_FLAG[n.nation] || ""}</span>` : "";
-    d.innerHTML = `${tag}${imgPh(n)}<div class="cname">${flg}${esc(n.name)}</div><div class="crp">${costText(n)}</div><div class="selmark">✓</div>`;
+    d.innerHTML = `${tag}${imgPh(n)}<div class="cname">${flgImg(n)}${esc(n.name)}</div><div class="crp">${costText(n)}</div><div class="selmark">✓</div>`;
     return d;
   }
 
@@ -336,11 +339,10 @@
       row.className = "prow";
       const isRes = n.availability === "researchable";
       const tag = isRes ? "" : `<span class="tag">${AVAIL_ZH[n.availability] || "特殊"}</span>`;
-      const flg = n.captured ? `<span class="flg">${NAT_FLAG[n.nation] || ""}</span>` : "";
       const exp = state.expanded.has(id);
       row.innerHTML = `
         <div class="top">
-          ${tag}<span class="pname" title="${esc(n.name)}">${flg}${esc(n.name)}</span>
+          ${tag}<span class="pname" title="${esc(n.name)}">${flgImg(n)}${esc(n.name)}</span>
           <span class="pcost">${costText(n)}</span>
           <span class="pbtns">
             <button type="button" class="iconbtn" data-act="chain">${exp ? "▾ 链" : "▸ 链"}</button>
