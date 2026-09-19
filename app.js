@@ -1,5 +1,7 @@
-/* /wtrp/ v4.8 —— 单页研发点计算器前端逻辑(CSP 安全:无内联脚本/样式,事件全委托)
+/* /wtrp/ v4.9 —— 单页研发点计算器前端逻辑(CSP 安全:无内联脚本/样式,事件全委托)
  * 依赖 calc.js 的 WTCalc。设计语言参照 blind-thunder.wiki wt-tree。
+ * v4.9:车名行右端=战斗权重 BR(分房;catalog br 字段,源自 vehicles-full realistic_br);
+ *       文件夹 +N 徽章样式位置调整(右下角,CSS 侧)。
  * v4.8:缴获/外国载具名前=游戏原生国家旗标(flags/<nation>.svg,取自 datamine gameuiskin,
  *       与 blind-thunder 同款);兵种页签改名 远洋海军/近岸海军。
  */
@@ -83,6 +85,10 @@
   // 缴获/外国载具:名前挂游戏原生国家旗标(与 blind-thunder 同款;catalog captured 标记)
   function flgImg(n) {
     return n.captured ? `<img class="flg" src="flags/${n.nation}.svg" alt="">` : "";
+  }
+  // 战斗权重(分房)徽标:RB 分房,catalog br 全量在册(3288/3288);无值不渲染(防御)
+  function brChip(n) {
+    return n.br ? `<span class="br" title="战斗权重(分房)">${Number(n.br).toFixed(1)}</span>` : "";
   }
   function imgPh(n) {
     if (!n.image) return `<div class="ph noimg">${CLS_ICON[n.class] || "?"}</div>`;
@@ -226,7 +232,7 @@
     d.dataset.id = n.id;
     d.dataset.name = n.name.toLowerCase();
     const tag = n.availability !== "researchable" ? `<span class="tag">${AVAIL_ZH[n.availability] || "特殊"}</span>` : "";
-    d.innerHTML = `${tag}${imgPh(n)}<div class="cname">${flgImg(n)}${esc(n.name)}</div><div class="crp">${costText(n)}</div><div class="selmark">✓</div>`;
+    d.innerHTML = `${tag}${imgPh(n)}<div class="cname">${flgImg(n)}<span class="nm">${esc(n.name)}</span>${brChip(n)}</div><div class="crp">${costText(n)}</div><div class="selmark">✓</div>`;
     return d;
   }
 

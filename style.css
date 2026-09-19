@@ -1,8 +1,10 @@
 /* /wtrp/ v4.8 —— 单页研发点计算器
  * 设计语言参照 blind-thunder.wiki 的 wt-tree:游戏卡片质感(底色+顶部色条+点阵纹理),
  * 选中=色条变金+斜纹叠层;文件夹就地展开面板;
- * v4.8:卡片加大(170px/图区 78px)、金币区随内容收紧(max-content,不再顶到右栏)、
- * 缴获车名前缀=游戏原生国家旗标 SVG(flags/<国>.svg,datamine gameuiskin 提取);
+ * v4.9:卡片加长(170→190px)、车名行右端=战斗权重 BR(分房,catalog 自带 realistic_br)、
+ *       文件夹 +N 徽章挪到卡片右下角(原在名价行旁);
+ * v4.8:金币区随内容收紧(max-content,不再顶到右栏)、
+ *       缴获车名前缀=游戏原生国家旗标 SVG(flags/<国>.svg,datamine gameuiskin 提取);
  * v4.7:卡片定宽(换页不变)、列内间距统一(文件夹不再额外下挤)、面纱更轻可辨背景字。
  */
 :root {
@@ -80,17 +82,17 @@ main { flex: 1; display: flex; min-height: 0; }
   padding-right: 12px; border-right: 2px solid #e8edf2;
   min-width: 0;
 }
-/* 卡片全站定宽 170px(与右区一致,换国家/兵种页宽度不变);列内间距统一 10px */
-.col { flex: none; width: 170px; display: flex; flex-direction: column; gap: 10px; }
+/* 卡片全站定宽 190px(v4.9 加长,车名行右端放 BR;与右区一致,换国家/兵种页宽度不变);列内间距统一 10px */
+.col { flex: none; width: 190px; display: flex; flex-direction: column; gap: 10px; }
 /* v4.8:金币区=两列网格(宽=内容,不再按视口比例撑满——右缘大空隙消除;
    注意不能用 flex-wrap+max-content:max-content 对 flex 容器=所有卡排一行的宽度,卡会全部挤到首行溢出) */
 .premium {
   flex: none; width: max-content;
-  display: grid; grid-template-columns: repeat(2, 170px); gap: 10px;
+  display: grid; grid-template-columns: repeat(2, 190px); gap: 10px;
   padding-left: 12px;
   align-content: start;
 }
-.premium .card { width: 170px; flex: none; }
+.premium .card { width: 190px; flex: none; }
 
 /* ── 载具卡(游戏质感) ── */
 .card {
@@ -122,14 +124,21 @@ main { flex: 1; display: flex; min-height: 0; }
 }
 .card .ph img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .card .ph.noimg { color: #54636f; font-size: 20px; font-weight: 700; }
+/* v4.9:车名行=flex(旗标+车名省略+右端 BR 徽标) */
 .card .cname {
   position: relative;
-  font-size: 12px; margin-top: 4px; height: 17px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: flex; align-items: center; gap: 3px;
+  font-size: 13px; margin-top: 4px; height: 17px;
+}
+.card .cname .nm { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 战斗权重(分房):车名行最右端小徽标(数据=catalog br,即 RB 分房) */
+.card .cname .br {
+  flex: none; font-size: 11px; line-height: 1; font-weight: 700;
+  padding: 2px 4px; border-radius: 3px;
+  background: #00000059; color: #e8eef2;
 }
 /* 缴获/外国载具:名前游戏原生国家旗标(彩色小旗,与 blind-thunder 同款,v4.8) */
-.card .flg { height: 11px; width: auto; margin-right: 3px; border-radius: 1px; box-shadow: 0 0 0 1px #00000055; vertical-align: -1px; }
-.card .cname { font-size: 13px; }
+.card .flg { height: 11px; width: auto; margin-right: 3px; border-radius: 1px; box-shadow: 0 0 0 1px #00000055; vertical-align: -1px; flex: none; }
 .card .crp { font-size: 12px; }
 .card .crp { position: relative; font-size: 11px; color: #b8c6cf; margin-top: 1px; white-space: nowrap; }
 .card .tag {
@@ -179,7 +188,7 @@ main { flex: 1; display: flex; min-height: 0; }
 .folder .fshell.s1 { transform: translate(5px, 5px); }
 .folder .fshell.s2 { transform: translate(10px, 8px); }
 .folder .cbadge {
-  position: absolute; right: 2px; bottom: 26px; z-index: 3;
+  position: absolute; right: 2px; bottom: 2px; z-index: 3;  /* v4.9:挪到卡片最右下角(原在名价行旁) */
   background: #000c; color: #ffd77a; font-size: 11px; line-height: 1;
   padding: 2px 6px; border-radius: 8px; border: 1px solid #6b5b23;
 }

@@ -37,10 +37,12 @@ check("style.css 花括号配平", openB === closeB, `${openB}/${closeB}`);
 for (const sel of [".folder .fstack", ".folder.open .folding-panel", ".card .ph img", ".research", ".premium", ".folder .fshell", "#veil"]) {
   check("style.css 含选择器 " + sel, css.includes(sel));
 }
-// v4.8:图片区加高 / 卡片加宽 / 金币区随内容收紧 / 面纱更轻 / fstack 无额外外边距(对齐)
-check("style.css v4.8 图片区 --img-h:78px", css.includes("--img-h: 78px"));
-check("style.css v4.8 卡片全站定宽 170px", css.includes("width: 170px"));
-check("style.css v4.8 金币区 max-content(右缘空隙消除)", css.includes("width: max-content"));
+// v4.9:车名行右端 BR 徽标 / 卡片加长 / 徽章右下角
+check("style.css v4.9 图片区 --img-h:78px", css.includes("--img-h: 78px"));
+check("style.css v4.9 卡片全站定宽 190px", css.includes("width: 190px") && !css.includes("width: 170px"));
+check("style.css v4.9 金币区 max-content(右缘空隙消除)", css.includes("width: max-content"));
+check("style.css v4.9 车名行 flex+.nm+.br 徽标", css.includes(".cname .nm") && css.includes(".cname .br"));
+check("style.css v4.9 +N 徽章右下角(bottom:2px)", /cbadge[^}]*bottom: 2px/.test(css));
 check("style.css v4.7 面纱更轻(.38+blur2px)", css.includes("rgba(8, 12, 14, .38)") && css.includes("blur(2px)"));
 check("style.css v4.7 fstack 无额外外边距", !css.includes("margin-bottom: 10px"));
 
@@ -141,7 +143,10 @@ check("分体防空发射车在研究区文件夹内(不在右区)",
   lchCard ? (lchCard.closest(".folding-panel") ? "in-panel" : "游离:" + (lchCard.closest(".premium") ? "右区" : "列")) : "未渲染");
 check("发射车标组合单元", !!(lchCard && lchCard.textContent.includes("组合单元")));
 
-// v4.8:缴获/外国载具名前=游戏原生国家旗标 img(与 blind-thunder 同款)
+// v4.9:每张卡 BR 徽标(数字带一位小数)在车名行右端;+N 徽章仍在
+const withBr = $$("#tree .card .cname .br").filter(b => /^\d+\.\d$/.test(b.textContent));
+check("卡片 BR 徽标渲染且格式 n.n", withBr.length >= 100, String(withBr.length));
+check("BR 徽标在 .cname 内(车名行右端)", withBr.every(b => !!b.closest(".cname")));
 const capCard = $$("#tree .card").find(c => (c.dataset.name || "").includes("斯图亚特 vi"));
 check("缴获载具名前渲染旗标 img.flg[src*=flags/]", !!capCard && !!capCard.querySelector('.cname img.flg[src*="flags/"]'),
   capCard ? (capCard.querySelector("img.flg") ? capCard.querySelector("img.flg").getAttribute("src") : "无 flg") : "未渲染");
