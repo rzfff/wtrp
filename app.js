@@ -59,10 +59,7 @@
   /* ---------- 工具 ---------- */
   const byId = id => state.ix.byId.get(id);
   function fmt(n) {
-    n = Math.round(n || 0);
-    if (n >= 1e8) return (n / 1e8).toFixed(2).replace(/\.?0+$/, "") + " 亿";
-    if (n >= 1e4) { const w = n / 1e4; return (w >= 100 ? Math.round(w) : w.toFixed(1).replace(/\.0$/, "")) + " 万"; }
-    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
   function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
   function needOf(id) {
@@ -70,9 +67,14 @@
     return state.needCache.get(id);
   }
   function costText(n) {
-    if (n.availability === "researchable") return n.is_reserve ? "初始载具" : fmt(n.rp_cost) + " RP";
-    if (n.ge_cost) return fmt(n.ge_cost) + " 金鹰";
-    return "活动/礼品";
+    switch (n.availability) {
+      case "researchable": return n.rp_cost === 0 ? "组合单元" : (n.is_reserve ? "初始载具" : fmt(n.rp_cost) + " RP");
+      case "premium": return fmt(n.ge_cost || 0) + " 金鹰";
+      case "pack": return "礼包";
+      case "marketplace": return "市场";
+      case "squadron": return "联队";
+      default: return "活动/绝版";
+    }
   }
   function imgPh(n) {
     if (!n.image) return `<div class="ph noimg">${CLS_ICON[n.class] || "?"}</div>`;
@@ -156,7 +158,10 @@
       }
     }
     for (const arr of cellMap.values()) arr.sort((a, b) => a.tree_order - b.tree_order);
-    for (const arr of premMap.values()) arr.sort((a, b) => a.tree_column - b.tree_column || a.tree_order - b.tree_order);
+    // 右区排序:金币/礼包/市场/联队在前,绝版活动车垫底(数量少,免得占着分界处显空)
+    const ZONE_ORD = { premium: 0, pack: 1, marketplace: 2, squadron: 3, event: 4 };
+    for (const arr of premMap.values()) arr.sort((a, b) =>
+      (ZONE_ORD[a.availability] ?? 5) - (ZONE_ORD[b.availability] ?? 5) || a.tree_column - b.tree_column || a.tree_order - b.tree_order);
 
     const frag = document.createDocumentFragment();
     for (const r of ranks) {
@@ -372,8 +377,7 @@
     const rows = c.path.map((vid, i) => {
       const vn = byId(vid);
       const arrow = i ? `<span class="arrow">└ ${i === c.path.length - 1 ? "目标: " : ""}</span>` : "";
-      const cost = vn.availability === "researchable" ? fmt(vn.rp_cost || 0) + " RP" : (vn.ge_cost ? fmt(vn.ge_cost) + " 金鹰" : "高级");
-      return `<div class="cnode">${arrow}<b>${esc(vn.name)}</b> · ${cost}</div>`;
+      return `<div class="cnode">${arrow}<b>${esc(vn.name)}</b> · ${costText(vn)}</div>`;
     }).join("");
     box.innerHTML = `${rows}<div class="subtotal">研发链合计 ${fmt(c.rp)} RP${c.ge ? " + " + fmt(c.ge) + " 金鹰" : ""}</div>`;
     return box;

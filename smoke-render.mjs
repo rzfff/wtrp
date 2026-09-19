@@ -123,5 +123,17 @@ if (folders.length) {
 const avs = new Set($$("#tree .card").map(c => [...c.classList].find(x => x.startsWith("av-"))));
 check("卡片含多态配色", ["av-researchable", "av-premium"].every(x => avs.has(x)), [...avs].join(","));
 
+// v4.6:千分符 / 顶栏分行 / 分体防空折叠 / 按类计价
+const crps = $$("#tree .card .crp").map(c => c.textContent);
+check("价格带千分符(1,000+)", crps.some(t => /\d,\d{3}/.test(t)), crps.find(t => /\d{3}/.test(t)) || "");
+check("礼包/市场车不标金鹰", !$$("#tree .card").some(c => (c.classList.contains("av-pack") || c.classList.contains("av-marketplace")) && /金鹰/.test(c.textContent)));
+check("顶栏国家/兵种分行(brand-row+两 nav 独立行)",
+  !!doc.querySelector(".brand-row #search") && doc.querySelector("#top > #nations") && doc.querySelector("#top > #classes"));
+const lchCard = $$("#tree .card").find(c => c.textContent.includes("NASAMS 3 发射车"));
+check("分体防空发射车在研究区文件夹内(不在右区)",
+  !!lchCard && !!lchCard.closest(".folding-panel") && !!lchCard.closest(".folder"),
+  lchCard ? (lchCard.closest(".folding-panel") ? "in-panel" : "游离:" + (lchCard.closest(".premium") ? "右区" : "列")) : "未渲染");
+check("发射车标组合单元", !!(lchCard && lchCard.textContent.includes("组合单元")));
+
 console.log(bad === 0 ? "\n渲染冒烟全部通过 ✅(" + (LIVE ? "线上" : "本地") + ")" : `\n${bad} 项未通过 ❌`);
 process.exit(bad === 0 ? 0 : 1);

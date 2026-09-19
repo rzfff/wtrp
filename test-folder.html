@@ -57,6 +57,16 @@
           g.firstCardAtOriginalSpot = Math.abs(c.x - a.x) < 6 && Math.abs(c.y - a.y) < 30; // 首卡在原卡位置
           g.panelAboveVeil = getComputedStyle(p).zIndex === "1000" && getComputedStyle(veil).zIndex === "999";
         }
+        // v4.6:卡高一致性(普通卡 vs 文件夹顶层卡,取研究区多列样本)
+        const hs = new Set();
+        for (const col of document.querySelectorAll("#tree .col")) {
+          for (const c of col.querySelectorAll(":scope > .card, :scope > .folder .fstack > .card")) {
+            hs.add(Math.round(c.getBoundingClientRect().height));
+            if (hs.size > 5) break;
+          }
+          if (hs.size > 5) break;
+        }
+        g.cardHeights = [...hs];
         const out = document.createElement("div");
         out.id = "geom";
         out.textContent = "GEOM=" + JSON.stringify(g);

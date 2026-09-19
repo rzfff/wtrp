@@ -151,6 +151,30 @@ def main():
                 if nxt and nxt.get("connection") == "folder":
                     folder = {"ids": [node["id"]], "preds": preds}
 
+            # 分体防空配对(X_fcs 雷达车 + X_launcher 发射车 = 同一作战单元):
+            # shop.blkx 把发射车塞在活动列(type=event);实际游戏里两者是同一研发单元的
+            # 折叠卡。配对后:发射车归研究区雷达车位置、folder_of=雷达车、rp_cost=0,
+            # 加一条 fcs->launcher 边(need(launcher)=0+need(fcs),选即整个单元)
+            by_ident = {n["identifier"]: n for n in tnodes}
+            for node in tnodes:
+                ident = node["identifier"]
+                if not ident.endswith("_launcher"):
+                    continue
+                fcs = by_ident.get(ident[: -len("_launcher")] + "_fcs")
+                if not fcs or fcs["zone"] != "research":
+                    continue
+                node["zone"] = "research"
+                node["availability"] = "researchable"
+                node["ge_cost"] = None
+                node["rp_cost"] = 0
+                node["is_reserve"] = False
+                node["tree_column"] = fcs["tree_column"]
+                node["rank"] = fcs["rank"]
+                node["tree_order"] = fcs["tree_order"] + 0.5
+                node["folder_of"] = fcs["id"]
+                tedges.append({"parent": fcs["id"], "child": node["id"]})
+                stats["paired_sam"] = stats.get("paired_sam", 0) + 1
+
             research_cols = [n["tree_column"] for n in tnodes if n["zone"] == "research"]
             trees.append({
                 "nation": country, "class": cls,
