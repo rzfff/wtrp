@@ -57,7 +57,7 @@ body {
 
 /* ── 主体 ── */
 main { flex: 1; display: flex; min-height: 0; }
-#tree-wrap { flex: 1; overflow: auto; position: relative; padding: 10px 14px 26px; }
+#tree-wrap { flex: 1; overflow: auto; position: relative; padding: 10px 14px 100px; }
 #tree { min-width: max-content; }
 
 /* 等级带:左数字标签 | 研究区(弹性拉伸) | 右区(固定宽) */
@@ -150,7 +150,7 @@ main { flex: 1; display: flex; min-height: 0; }
 .card.sel .selmark { display: flex; }
 
 /* ── 文件夹:顶层=真实卡片,背后垫同款空卡壳(游戏样式) ── */
-.folder { position: relative; width: 100%; min-width: 112px; cursor: pointer; user-select: none; }
+.folder { position: relative; z-index: 1; width: 100%; min-width: 112px; cursor: pointer; user-select: none; }
 .folder .fstack { position: relative; margin-bottom: 9px; }
 .folder .fstack > .card { position: relative; z-index: 2; }
 .folder .fshell {
@@ -169,12 +169,34 @@ main { flex: 1; display: flex; min-height: 0; }
   background: #000c; color: #ffd77a; font-size: 11px; line-height: 1;
   padding: 2px 6px; border-radius: 8px; border: 1px solid #6b5b23;
 }
-/* 就地同列向下展开(游戏样式):成员卡竖排,垫层收起、顶层卡成为列表首张 */
-.folder .fold-body { display: none; flex-direction: column; gap: 8px; margin-top: 8px; }
-.folder.open .fold-body { display: flex; }
-.folder.open .fshell { display: none; }
-.folder.open .fstack { margin-bottom: 0; }
+/* ── blind-thunder folding-vehicle 同款展开:absolute 浮层 + 全屏毛玻璃面纱 ── */
+/* bt 面板 top:-30/padding:25 依赖其 30px 行距;我们 .col 行距 8px,
+   顶衬里上限 7px(否则盖住上一张卡)。衬里公式:内容区起点 = -(top)+边框+padding。 */
+.folder.open { z-index: 1000; }
 .folder.open .cbadge { background: #ffd77a; color: #241a00; border-color: #b99b4e; }
+.folding-panel {
+  display: none;
+  position: absolute;
+  top: -8px; left: -13px;
+  z-index: 1000;
+  width: calc(100% + 26px);
+  padding: 7px 12px 12px;
+  background-color: var(--panel2);
+  border: 1px solid var(--line);
+  box-shadow: 0 0 6px 1px #0003;
+}
+.folder.open .folding-panel { display: block; }
+.folding-panel .card + .card { margin-top: 8px; }
+/* 面纱 = bt public_mask:fixed 全屏 z-999,渐变实色用页面底色 rgb(20,25,27) */
+#veil {
+  position: fixed; inset: 0; z-index: 999;
+  background-image: linear-gradient(to bottom, transparent, rgba(20,25,27,1) 70%, rgba(20,25,27,1) 90%);
+  -webkit-backdrop-filter: blur(100px);
+  backdrop-filter: blur(100px);
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s ease;
+}
+#veil.show { opacity: 1; pointer-events: auto; }
 
 /* ── 按钮 ── */
 .btn {

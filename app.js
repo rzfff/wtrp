@@ -17,14 +17,14 @@
     expanded: new Set(),
     search: "",
     needCache: new Map(),
-    openFolders: new Set(), // 展开中的文件夹根 id(可同时多个,游戏同款)
+    openFolder: null, // 当前展开的文件夹根 id(一次一个,blind-thunder 同款)
   };
 
   const el = {};
   document.addEventListener("DOMContentLoaded", init);
 
   async function init() {
-    ["nations", "classes", "search", "tree", "tree-wrap", "p-title", "p-list", "p-foot", "p-clear", "ver", "foot-ver"]
+    ["nations", "classes", "search", "tree", "tree-wrap", "p-title", "p-list", "p-foot", "p-clear", "ver", "foot-ver", "veil"]
       .forEach(id => (el[id.replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = document.getElementById(id)));
     const res = await fetch("data/catalog.json", { cache: "no-cache" });
     if (!res.ok) throw new Error("catalog 加载失败: " + res.status);
@@ -48,9 +48,8 @@
         if (ph) { ph.classList.add("noimg"); ph.textContent = CLS_ICON[state.cls] || "?"; }
       }
     }, true);
-    document.addEventListener("click", e => {
-      if (!e.target.closest(".folder")) closeAllFolders();
-    });
+    // 面纱(blind-thunder public_mask 同款):开文件夹时压暗整树,点面纱收起
+    el.veil.addEventListener("click", closeAllFolders);
     document.addEventListener("keydown", e => { if (e.key === "Escape") closeAllFolders(); });
     window.addEventListener("hashchange", () => { loadHash(); buildClassTabs(); renderTree(); });
     renderTree();
@@ -188,12 +187,9 @@
       band.appendChild(prem);
       frag.appendChild(band);
     }
+    // 恢复展开状态无意义(面纱交互一次一个),渲染前先收干净
     el.tree.innerHTML = "";
     el.tree.appendChild(frag);
-    // 恢复展开状态(切页重渲染后)
-    el.tree.querySelectorAll(".folder").forEach(f => {
-      if (state.openFolders.has(Number(f.dataset.root))) f.classList.add("open");
-    });
     applySearch();
   }
 
@@ -243,46 +239,39 @@
     badge.title = "展开/收起";
     badge.textContent = "+" + unit.members.length;
     d.appendChild(badge);
-    // 同列向下就地展开(游戏样式):成员卡竖排在顶层卡下方
-    const body = document.createElement("div");
-    body.className = "fold-body";
-    for (const n of unit.members) body.appendChild(cardEl(n));
-    d.appendChild(body);
+    // blind-thunder folding-vehicle 同款:面板=原卡位置上的深色衬里浮层,
+    // 根车打头(与被盖住的原卡逐像素重合),成员竖排普通流,bt 无动画无翻转
+    const panel = document.createElement("div");
+    panel.className = "folding-panel";
+    for (const n of all) panel.appendChild(cardEl(n));
+    d.appendChild(panel);
     return d;
   }
 
   function closeAllFolders() {
-    state.openFolders.clear();
-    el.tree.querySelectorAll(".folder.open").forEach(f => f.classList.remove("open"));
+    if (state.openFolder == null) return;
+    const prev = el.tree.querySelector('.folder[data-root="' + state.openFolder + '"]');
+    if (prev) prev.classList.remove("open");
+    state.openFolder = null;
+    el.veil.classList.remove("show");
   }
 
   function toggleFolder(folderEl_) {
     const rootId = Number(folderEl_.dataset.root);
-    if (state.openFolders.has(rootId)) {
-      state.openFolders.delete(rootId);
-      folderEl_.classList.remove("open");
-    } else {
-      state.openFolders.add(rootId);
-      folderEl_.classList.add("open");
-    }
+    if (state.openFolder === rootId) { closeAllFolders(); return; }
+    closeAllFolders();
+    folderEl_.classList.add("open");
+    state.openFolder = rootId;
+    el.veil.classList.add("show");
   }
 
   /* ---------- 交互 ---------- */
   function onTreeClick(e) {
-    // 展开后的成员卡:直接切换选中
-    const bodyCard = e.target.closest(".fold-body .card");
-    if (bodyCard) { toggleSelect(Number(bodyCard.dataset.id)); return; }
+    // 展开面板内的卡(根车/成员):直接切换选中
+    const panelCard = e.target.closest(".folding-panel .card");
+    if (panelCard) { toggleSelect(Number(panelCard.dataset.id)); return; }
     const folder = e.target.closest(".folder");
-    if (folder) {
-      // 展开态下点顶层卡=选中组根车;收起态整体/角标=开关
-      const topCard = e.target.closest(".fstack .card");
-      if (folder.classList.contains("open") && topCard && !e.target.closest(".cbadge")) {
-        toggleSelect(Number(topCard.dataset.id));
-        return;
-      }
-      toggleFolder(folder);
-      return;
-    }
+    if (folder) { toggleFolder(folder); return; }
     const card = e.target.closest(".card");
     if (card) toggleSelect(Number(card.dataset.id));
   }

@@ -34,7 +34,7 @@ const check = (name, ok, extra = "") => {
 const css = files["style.css"];
 const openB = (css.match(/{/g) || []).length, closeB = (css.match(/}/g) || []).length;
 check("style.css 花括号配平", openB === closeB, `${openB}/${closeB}`);
-for (const sel of [".folder .fstack", ".folder.open .fold-body", ".card .ph img", ".research", ".premium", ".folder .fshell"]) {
+for (const sel of [".folder .fstack", ".folder.open .folding-panel", ".card .ph img", ".research", ".premium", ".folder .fshell", "#veil"]) {
   check("style.css 含选择器 " + sel, css.includes(sel));
 }
 
@@ -94,33 +94,29 @@ check("文件夹堆叠=真实卡片+垫层壳(fstack>.card 顶层,fshell 垫层)
 check("文件夹无多余文案(无「文件夹」标签/全选按钮)",
   !doc.body.textContent.includes("文件夹 · 任选其一") && !doc.body.textContent.includes("全选"));
 check("顶层卡随文件夹有联合搜索名", folders.every(f => (f.dataset.name || "").split(" ").length >= 2));
-check("文件夹就地向下展开体(.fold-body 内嵌成员卡)",
-  folders.every(f => f.querySelector(":scope > .fold-body") && f.querySelectorAll(":scope > .fold-body .card").length >= 1));
+check("文件夹包裹面板内嵌(.folding-panel 直挂根车+成员卡)",
+  folders.every(f => f.querySelector(":scope > .folding-panel > .card")));
 
-// 交互:点文件夹 → 同列向下展开;点成员卡 → 选中
+// 交互:点文件夹 → 包裹面板展开+面纱压暗;点成员卡 → 选中;点面纱 → 收起
 if (folders.length) {
   const f = folders[0];
   f.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
-  check("点击文件夹 → 就地向下展开(.open)", f.classList.contains("open"));
-  const body = f.querySelector(":scope > .fold-body");
-  const bodyCards = body ? body.querySelectorAll(".card") : [];
-  check("展开体成员卡 ≥2", bodyCards.length >= 2, String(bodyCards.length));
-  const im = body && body.querySelector(".card .ph img, .card .ph.noimg");
-  check("成员卡有图片或占位", !!im);
-  if (bodyCards.length) {
-    bodyCards[0].dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  check("点击文件夹 → .open + 面纱 .show", f.classList.contains("open") && $("#veil").classList.contains("show"));
+  const panel = f.querySelector(":scope > .folding-panel");
+  const panelCards = panel ? panel.querySelectorAll(".card") : [];
+  check("面板内卡 ≥3(根车+成员)", panelCards.length >= 3, String(panelCards.length));
+  const im = panel && panel.querySelector(".card .ph img, .card .ph.noimg");
+  check("面板卡有图片或占位", !!im);
+  if (panelCards.length) {
+    panelCards[1].dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
     await new Promise(r => setTimeout(r, 50));
-    check("点成员卡 → 侧栏已选=1", $("#p-title").textContent.includes("(1)"), $("#p-title").textContent);
+    check("点成员卡 → 侧栏已选=1(面板不收起)", $("#p-title").textContent.includes("(1)") && f.classList.contains("open"), $("#p-title").textContent);
     check("侧栏合计出现", /研发点合计|金鹰合计/.test($("#p-foot").textContent));
   }
-  // 展开态点顶层卡=选中组根车(不再开关)
-  const top = f.querySelector(":scope > .fstack .card");
-  if (top) {
-    const before = f.classList.contains("open");
-    top.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
-    await new Promise(r => setTimeout(r, 30));
-    check("展开态点顶层卡=选中根车(不收起)", f.classList.contains("open") === before && $("#p-title").textContent.includes("(2)"), $("#p-title").textContent);
-  }
+  // 点面纱 → 收起
+  $("#veil").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  await new Promise(r => setTimeout(r, 30));
+  check("点面纱 → 面板收起+面纱隐去", !f.classList.contains("open") && !$("#veil").classList.contains("show"));
 }
 
 // 右区载具存在(av-premium/event/marketplace 至少两类)

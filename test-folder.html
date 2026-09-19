@@ -27,6 +27,7 @@
     <div id="p-foot"></div>
   </aside>
 </main>
+<div id="veil"></div>
 <footer id="foot">
   数据源:anhappy /wtapi/ 管线 · <span id="foot-ver"></span>
 </footer>
@@ -42,14 +43,19 @@
       f.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       setTimeout(() => {
         const open = f.classList.contains("open");
+        const veil = document.getElementById("veil");
         const top = f.querySelector(":scope > .fstack .card");
-        const m1 = f.querySelector(":scope > .fold-body .card");
-        const g = { open };
+        const p = f.querySelector(":scope > .folding-panel");
+        const pc = p && p.querySelector(".card");
+        const g = { open, veil: veil && veil.classList.contains("show") };
         if (top) { const r = top.getBoundingClientRect(); g.topCard = { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) }; }
-        if (m1) { const r = m1.getBoundingClientRect(); g.member1 = { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width) }; }
-        if (top && m1) {
-          const a = top.getBoundingClientRect(), b = m1.getBoundingClientRect();
-          g.memberBelowSameColumn = b.y > a.y && Math.abs(b.x - a.x) < 5 && Math.abs(b.width - a.width) < 5;
+        if (p) { const r = p.getBoundingClientRect(); g.panel = { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) }; }
+        if (pc) { const r = pc.getBoundingClientRect(); g.panelCard1 = { x: Math.round(r.x), y: Math.round(r.y) }; }
+        if (top && p) {
+          const a = top.getBoundingClientRect(), b = p.getBoundingClientRect(), c = pc.getBoundingClientRect();
+          g.haloWrap = b.x < a.x && b.y < a.y && b.right > a.right;         // 面板包住原卡(负偏移+内衬)
+          g.firstCardAtOriginalSpot = Math.abs(c.x - a.x) < 6 && Math.abs(c.y - a.y) < 30; // 首卡在原卡位置
+          g.panelAboveVeil = getComputedStyle(p).zIndex === "1000" && getComputedStyle(veil).zIndex === "999";
         }
         const out = document.createElement("div");
         out.id = "geom";
