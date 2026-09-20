@@ -40,7 +40,7 @@ for (const sel of [".folder .fstack", ".folder.open .folding-panel", ".card .ph 
 // v5.2:卡宽 130(1680 零横滚解)/图区 62+图上间隔 5px / 车名行右端 BR 徽标
 check("style.css v5.2 图片区 --img-h:62px+图上间隔 padding-top:5px", css.includes("--img-h: 62px") && css.includes("padding-top: 5px"));
 check("style.css v5.3 @font-face WTSymbols+银狮行+无旗标", css.includes("@font-face") && css.includes("WTSymbols") && css.includes(".card .csl") && !css.includes(".flg"));
-check("style.css v5.2 卡片全站定宽 130px", css.includes(".col { flex: none; width: 130px") && !css.includes("repeat(2, 190px)"));
+check("style.css 桌面卡片定宽 130px/手机端自适应", css.includes("width: 130px") && css.includes(".card, .premium .card { width: 100%") && !css.includes("repeat(2, 190px)"));
 check("style.css v5.0 金币区 max-content(右缘空隙消除)", css.includes("width: max-content"));
 check("style.css v4.9 车名行 flex+.nm+.br 徽标", css.includes(".cname .nm") && css.includes(".cname .br"));
 check("style.css v4.9 +N 徽章右下角(bottom:2px)", /cbadge[^}]*bottom: 2px/.test(css));
@@ -105,6 +105,25 @@ check("文件夹无多余文案(无「文件夹」标签/全选按钮)",
 check("顶层卡随文件夹有联合搜索名", folders.every(f => (f.dataset.name || "").split(" ").length >= 2));
 check("文件夹包裹面板内嵌(.folding-panel 直挂根车+成员卡)",
   folders.every(f => f.querySelector(":scope > .folding-panel > .card")));
+
+// 研究顺序箭头与首次选择：连线锚定可见卡片，侧栏链必须由用户主动打开。
+const connectorSvg = $("#tree > .tree-connectors");
+const connectorPaths = connectorSvg ? connectorSvg.querySelectorAll("path") : [];
+check("科技树研究顺序 SVG 连线已渲染", !!connectorSvg && connectorPaths.length >= 1, String(connectorPaths.length));
+check("连线叠层不遮挡卡片", !!connectorSvg && css.includes(".tree-connectors") && css.includes("pointer-events: none"));
+const firstVisibleCard = $$("#tree > .band .card")[0];
+if (firstVisibleCard) {
+  firstVisibleCard.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  await new Promise(r => setTimeout(r, 30));
+  check("首次选择载具时研发链默认收起", $("#p-list .chain") === null);
+  const chainButton = $("#p-list [data-act=chain]");
+  if (chainButton) {
+    chainButton.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    await new Promise(r => setTimeout(r, 30));
+    check("点击链按钮后才展开研发链", $("#p-list .chain") !== null);
+  }
+  $("#p-clear").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+}
 
 // 交互:点文件夹 → 包裹面板展开+面纱压暗;点成员卡 → 选中;点面纱 → 收起
 if (folders.length) {

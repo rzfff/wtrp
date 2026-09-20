@@ -1,4 +1,4 @@
-/* /wtrp/ v5.3 —— 单页研发点计算器
+/* /wtrp/ v5.7 —— 单页研发点计算器
  * 设计语言参照 blind-thunder.wiki 的 wt-tree:游戏卡片质感(底色+顶部色条+点阵纹理),
  * 选中=色条变金+斜纹叠层;文件夹就地展开面板;
  * v5.3:名字图标=游戏符号字体 WTSymbols(自托管,与 bt 同源;名字保留原样前缀字符——
@@ -69,17 +69,21 @@ body {
 
 /* ── 主体 ── */
 main { flex: 1; display: flex; min-height: 0; }
-#tree-wrap { flex: 1; overflow: auto; position: relative; padding: 10px 14px 100px; }
-#tree { min-width: max-content; }
+#tree-wrap { flex: 1; min-width: 0; min-height: 0; overflow: auto; position: relative; padding: 10px 14px 100px; }
+#tree { position: relative; min-width: max-content; }
+.tree-connectors {
+  position: absolute; z-index: 0; top: 0; left: 0;
+  display: block; overflow: visible; pointer-events: none;
+}
 
 /* 等级带:左数字标签 | 研究区(弹性拉伸) | 右区(固定宽) */
-.band { display: flex; align-items: stretch; padding: 5px 0; border-bottom: 1px solid #232e33; }
-.band:first-child { padding-top: 2px; }
+.band { position: relative; z-index: 1; display: flex; align-items: stretch; padding: 10px 0; border-bottom: 1px solid #232e33; }
+.band:first-child { padding-top: 4px; }
 .rank-label {
-  width: 34px; flex: none;
+  width: 48px; flex: none;
   display: flex; align-items: center; justify-content: center;
   color: #7d8f99; font-weight: 700; font-size: 16px;
-  border-right: 1px solid #232e33; margin-right: 8px;
+  border-right: 1px solid #232e33; margin-right: 10px;
   font-family: Georgia, "Times New Roman", serif;
 }
 .research {
@@ -88,11 +92,11 @@ main { flex: 1; display: flex; min-height: 0; }
   min-width: 0;
 }
 /* 卡片全站定宽 130px(v5.2=1680 视口零横滚解;车名行右端放 BR;与右区一致,换国家/兵种页宽度不变);列内间距统一 10px */
-.col { flex: none; width: 130px; display: flex; flex-direction: column; gap: 10px; }
+.col { position: relative; z-index: 1; flex: none; width: 130px; display: flex; flex-direction: column; gap: 22px; }
 /* v4.8:金币区=两列网格(宽=内容,不再按视口比例撑满——右缘大空隙消除;
    注意不能用 flex-wrap+max-content:max-content 对 flex 容器=所有卡排一行的宽度,卡会全部挤到首行溢出) */
 .premium {
-  flex: none; width: max-content;
+  position: relative; z-index: 1; flex: none; width: max-content;
   display: grid; grid-template-columns: repeat(2, 130px); gap: 10px;
   padding-left: 10px;
   align-content: start;
@@ -101,7 +105,7 @@ main { flex: 1; display: flex; min-height: 0; }
 
 /* ── 载具卡(游戏质感) ── */
 .card {
-  position: relative; width: 100%;
+  position: relative; z-index: 2; width: 100%;
   border: 1px solid var(--c-res-border);
   border-top: 2px solid var(--c-res-top);
   border-radius: var(--radius);
@@ -270,6 +274,65 @@ main { flex: 1; display: flex; min-height: 0; }
 @media (max-width: 900px) {
   main { flex-direction: column; }
   #panel { width: auto; border-left: none; border-top: 1px solid var(--line); max-height: 40vh; }
+}
+
+/* 手机布局:科技树仍可横向平移,但顶部控件和等级标签不挤压可视区域 */
+/* 手机端总览：保留列顺序，但把研究列排成紧凑网格，让一屏能看到更多分支。 */
+@media (max-width: 600px) {
+  html, body { height: auto; min-height: 100%; overflow-x: hidden; overflow-y: auto; }
+  body { display: block; }
+  #top { position: sticky; top: 0; z-index: 20; padding: 7px 8px; gap: 4px; }
+  .brand-row { flex-direction: column; align-items: stretch; gap: 5px; }
+  .brand { font-size: 15px; }
+  #search { width: 100%; height: 30px; }
+  .tabs { flex-wrap: nowrap; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs button { flex: none; padding: 4px 8px; min-height: 28px; font-size: 12px; }
+  #classes { padding-top: 3px; }
+
+  main { display: block; min-height: 0; }
+  #tree-wrap { overflow: visible; padding: 5px 6px 32px; }
+  #tree { width: 100%; min-width: 0; }
+  .band { display: grid; grid-template-columns: 30px minmax(0, 1fr); padding: 6px 0; }
+  .band:first-child { padding-top: 3px; }
+  .rank-label { grid-column: 1; grid-row: 1 / span 2; width: 30px; margin-right: 0; font-size: 12px; }
+  .research {
+    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-column: 2; grid-row: 1; gap: 8px 4px; padding-right: 4px; min-width: 0; width: auto;
+    align-items: start;
+  }
+  .col { width: auto; min-width: 0; gap: 8px; }
+  .premium {
+    grid-column: 2; grid-row: 2; width: auto; grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px 4px; padding: 6px 4px 0; min-width: 0;
+  }
+  .card, .premium .card { width: 100%; min-width: 0; padding: 0 2px 2px; }
+  .card .ph { height: 29px; margin-top: 1px; padding-top: 1px; }
+  .card .cname { gap: 1px; font-size: 8px; margin-top: 1px; height: 11px; }
+  .card .cname .br { font-size: 7px; padding: 1px 2px; }
+  .card .crp { font-size: 8px; line-height: 10px; margin-top: 0; }
+  .card .csl { display: none; }
+  .card .tag { top: 3px; right: 2px; font-size: 8px; padding: 1px 3px; }
+  .card .selmark { top: 2px; left: 2px; width: 14px; height: 14px; font-size: 9px; }
+  .folder .fshell.s1 { transform: translate(3px, 3px); }
+  .folder .fshell.s2 { transform: translate(6px, 5px); }
+  .folder .cbadge { right: 1px; bottom: 1px; font-size: 8px; padding: 1px 3px; }
+  .folding-panel { top: -6px; left: -7px; width: calc(100% + 14px); padding: 5px 6px 7px; }
+  .folding-panel .card + .card { margin-top: 5px; }
+
+  #panel { width: 100%; max-height: none; border-left: 0; border-top: 1px solid var(--line); }
+  .p-head { padding: 7px 9px; }
+  #p-list { max-height: 34vh; overflow: auto; padding: 6px; }
+  #p-foot { padding: 7px 9px; }
+  #foot { padding: 5px 8px; }
+}
+
+@media (max-width: 360px) {
+  .research, .premium { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (max-width: 320px) {
+  .research, .premium { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 #tree-wrap::-webkit-scrollbar, #p-list::-webkit-scrollbar { width: 10px; height: 10px; }

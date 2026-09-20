@@ -1,4 +1,4 @@
-/* /wtrp/ v5.3 —— 单页研发点计算器前端逻辑(CSP 安全:无内联脚本/样式,事件全委托)
+/* /wtrp/ v5.7 —— 单页研发点计算器前端逻辑(CSP 安全:无内联脚本/样式,事件全委托)
  * 依赖 calc.js 的 WTCalc。设计语言参照 blind-thunder.wiki wt-tree。
  * v5.3:名字图标=游戏符号字体 WTSymbols 自托管(名字保留原样前缀字符,无色文字级,与游戏一致;
  *       弃彩色旗标 SVG);卡片/合计显示银狮花费;金鹰合计仅金币车(礼包/市场/联队不可金鹰购)。
@@ -22,6 +22,8 @@
     search: "",
     needCache: new Map(),
     openFolder: null, // 当前展开的文件夹根 id(一次一个,blind-thunder 同款)
+    connectorObserver: null,
+    connectorRefresh: 0,
   };
 
   const el = {};
@@ -193,6 +195,7 @@
       for (let c = 1; c <= colCount; c++) {
         const col = document.createElement("div");
         col.className = "col";
+        col.dataset.column = String(c);
         const cell = cellMap.get(r + ":" + c);
         if (cell) for (const unit of clusterFolder(cell)) {
           col.appendChild(unit.members.length ? folderEl(unit) : cardEl(unit.root));
@@ -211,7 +214,170 @@
     // 恢复展开状态无意义(面纱交互一次一个),渲染前先收干净
     el.tree.innerHTML = "";
     el.tree.appendChild(frag);
+    renderTreeConnectors(nodes);
     applySearch();
+  }
+
+  // 研发顺序提示：独立 SVG 叠层负责连线，卡片位于其上方。
+  // 线从父卡底部开始，在子卡顶部前留下箭头间隙，因此不会穿过卡片。
+  function renderTreeConnectors(nodes) {
+    const ids = new Set(nodes.map(n => n.id));
+    const nodeById = new Map(nodes.map(n => [n.id, n]));
+    const visibleId = id => {
+      const n = nodeById.get(id);
+      return n && n.folder_of && n.folder_of !== n.id ? n.folder_of : id;
+    };
+    const parents = new Map();
+    const addParent = (child, parent) => {
+      if (!ids.has(child) || !ids.has(parent)) return;
+      const childRoot = visibleId(child), parentRoot = visibleId(parent);
+      if (childRoot === parentRoot) return;
+      if (!parents.has(childRoot)) parents.set(childRoot, new Set());
+      parents.get(childRoot).add(parentRoot);
+    };
+    for (const edge of state.catalog.edges || []) addParent(edge.child, edge.parent);
+    // 组合单元的成员与根车共用研发位置，根车是可见的连接锚点。
+    for (const n of nodes) if (n.folder_of && n.folder_of !== n.id) addParent(n.id, n.folder_of);
+
+    const old = el.tree.querySelector(":scope > .tree-connectors");
+    if (old) old.remove();
+    if (state.connectorObserver) {
+      state.connectorObserver.disconnect();
+      state.connectorObserver = null;
+    }
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.classList.add("tree-connectors");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("focusable", "false");
+    el.tree.prepend(svg);
+
+    const visibleCards = new Map();
+    el.tree.querySelectorAll(":scope > .band .card[data-id]").forEach(card => {
+      if (!card.closest(".folding-panel")) visibleCards.set(Number(card.dataset.id), card);
+    });
+    const edges = [];
+    const seen = new Set();
+    for (const [child, parentSet] of parents) {
+      const target = visibleCards.get(child);
+      if (!target) continue;
+      for (const parent of parentSet) {
+        const source = visibleCards.get(parent);
+        if (!source || source === target) continue;
+        const key = parent + ":" + child;
+        if (!seen.has(key)) { seen.add(key); edges.push({ source, target, key }); }
+      }
+    }
+    if (!edges.length) return;
+
+    const treeRect = el.tree.getBoundingClientRect();
+    // 不直接使用 tree.scrollWidth：SVG 自身会参与 scrollWidth 计算，手机从桌面
+    // 视口切换时会把旧的宽度再次带回来，形成一层看不见的横向溢出。
+    // 以实际等级带的边界计算内容尺寸，避免连线层反过来撑大科技树。
+    const bandRects = [...el.tree.querySelectorAll(":scope > .band")].map(b => b.getBoundingClientRect());
+    const width = Math.max(
+      Math.ceil(treeRect.width),
+      ...bandRects.map(r => Math.ceil(r.right - treeRect.left)),
+      1,
+    );
+    const height = Math.max(
+      Math.ceil(treeRect.height),
+      ...bandRects.map(r => Math.ceil(r.bottom - treeRect.top)),
+      1,
+    );
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    svg.setAttribute("width", String(width));
+    svg.setAttribute("height", String(height));
+
+    const sourceCount = new Map();
+    const edgeOffset = new Map();
+    for (const edge of edges) {
+      sourceCount.set(edge.target, (sourceCount.get(edge.target) || 0) + 1);
+    }
+    const sourceSeen = new Map();
+    for (const edge of edges) {
+      const index = sourceSeen.get(edge.target) || 0;
+      sourceSeen.set(edge.target, index + 1);
+      const count = sourceCount.get(edge.target) || 1;
+      edgeOffset.set(edge.key, (index - (count - 1) / 2) * 12);
+    }
+
+    const lineColor = "#6e8f91";
+    const arrowHeight = 7;
+    const arrowGap = 8;
+    const startGap = 3;
+    const rectOf = node => node.getBoundingClientRect();
+    // 每条研究列先画一根贯穿科技树的主干。卡片层级更高，会自然把主干在卡片处遮断。
+    const lanes = new Map();
+    el.tree.querySelectorAll(":scope > .band .col").forEach(col => {
+      const cards = [...col.querySelectorAll(":scope > .card, :scope > .folder > .fstack > .card")];
+      if (!cards.length) return;
+      // 用布局后的实际中心点分组，而不是只看原始 tree_column。
+      // 手机端列数会减少，超出的研究列会换到下一行；此时它们应继续
+      // 接到屏幕上同一条主干线上，而不能沿用桌面列号画出错位长线。
+      const firstRect = rectOf(cards[0]);
+      const key = Math.round((firstRect.left - treeRect.left + firstRect.width / 2) * 2) / 2;
+      if (!lanes.has(key)) lanes.set(key, []);
+      lanes.get(key).push(...cards);
+    });
+    for (const cards of lanes.values()) {
+      const rects = cards.map(rectOf);
+      const x = rects.reduce((sum, r) => sum + r.left + r.width / 2, 0) / rects.length - treeRect.left;
+      const top = Math.min(...rects.map(r => r.top - treeRect.top)) - 2;
+      const bottom = Math.max(...rects.map(r => r.bottom - treeRect.top)) + 2;
+      const spine = document.createElementNS(svgNS, "path");
+      spine.setAttribute("d", `M ${x} ${top} V ${bottom}`);
+      spine.setAttribute("fill", "none");
+      spine.setAttribute("stroke", lineColor);
+      spine.setAttribute("stroke-width", "3");
+      spine.setAttribute("stroke-linecap", "butt");
+      spine.classList.add("tree-spine");
+      svg.appendChild(spine);
+    }
+    for (const edge of edges) {
+      const sourceRect = rectOf(edge.source), targetRect = rectOf(edge.target);
+      const sx = sourceRect.left - treeRect.left + sourceRect.width / 2;
+      const tx = targetRect.left - treeRect.left + targetRect.width / 2;
+      const sy = sourceRect.bottom - treeRect.top + startGap;
+      const ty = targetRect.top - treeRect.top - arrowGap;
+      const offset = edgeOffset.get(edge.key) || 0;
+      const sourceColumn = edge.source.closest(".col");
+      const targetColumn = edge.target.closest(".col");
+      const path = document.createElementNS(svgNS, "path");
+      const sameLane = sourceColumn && sourceColumn === targetColumn;
+      let d;
+      if (sameLane && Math.abs(sx - tx) < 1 && ty >= sy) {
+        // 同列主干已经覆盖这段线，只保留目标卡片前的箭头。
+        d = "";
+      } else {
+        const routeY = ty >= sy ? sy + (ty - sy) / 2 : Math.max(sy, ty) + 10 + Math.abs(offset);
+        d = `M ${sx + offset} ${sy} V ${routeY} H ${tx + offset} V ${ty}`;
+      }
+      if (d) {
+        path.setAttribute("d", d);
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", lineColor);
+        path.setAttribute("stroke-width", "3");
+        path.setAttribute("stroke-linecap", "butt");
+        path.setAttribute("stroke-linejoin", "miter");
+        path.dataset.edge = edge.key;
+        svg.appendChild(path);
+      }
+
+      const arrow = document.createElementNS(svgNS, "path");
+      arrow.setAttribute("d", `M ${tx + offset - 6} ${ty} H ${tx + offset + 6} L ${tx + offset} ${ty + arrowHeight} Z`);
+      arrow.setAttribute("fill", lineColor);
+      arrow.dataset.edge = edge.key;
+      arrow.classList.add("tree-arrow");
+      svg.appendChild(arrow);
+    }
+    if (window.ResizeObserver) {
+      state.connectorObserver = new ResizeObserver(() => {
+        window.clearTimeout(state.connectorRefresh);
+        state.connectorRefresh = window.setTimeout(() => renderTreeConnectors(nodes), 30);
+      });
+      state.connectorObserver.observe(el.tree);
+    }
   }
 
   function clusterFolder(cellNodes) {
@@ -303,7 +469,6 @@
       state.expanded.delete(id);
     } else {
       state.selected.set(id, true);
-      if (state.selected.size === 1) state.expanded.add(id);
     }
     afterSelectionChange();
   }
