@@ -78,6 +78,11 @@ main { flex: 1; display: flex; min-height: 0; }
 
 /* 等级带:左数字标签 | 研究区(弹性拉伸) | 右区(固定宽) */
 .band { position: relative; z-index: 1; display: flex; align-items: stretch; padding: 10px 0; border-bottom: 1px solid #232e33; }
+/* A band forms a stacking context so its folder panel cannot escape by
+   raising the folder alone. Lift the active band above #veil while open. */
+.band.folder-open { z-index: 1001; pointer-events: none; }
+.band.folder-open .folder.open,
+.band.folder-open .folder.open * { pointer-events: auto; }
 .band:first-child { padding-top: 4px; }
 .rank-label {
   width: 48px; flex: none;
@@ -92,7 +97,7 @@ main { flex: 1; display: flex; min-height: 0; }
   min-width: 0;
 }
 /* 卡片全站定宽 130px(v5.2=1680 视口零横滚解;车名行右端放 BR;与右区一致,换国家/兵种页宽度不变);列内间距统一 10px */
-.col { position: relative; z-index: 1; flex: none; width: 130px; display: flex; flex-direction: column; gap: 22px; }
+.col { position: relative; z-index: 1; flex: none; width: 130px; display: flex; flex-direction: column; gap: 28px; }
 /* v4.8:金币区=两列网格(宽=内容,不再按视口比例撑满——右缘大空隙消除;
    注意不能用 flex-wrap+max-content:max-content 对 flex 容器=所有卡排一行的宽度,卡会全部挤到首行溢出) */
 .premium {
@@ -115,6 +120,9 @@ main { flex: 1; display: flex; min-height: 0; }
   cursor: pointer; user-select: none;
   transition: filter .12s;
 }
+/* Keep the card width contract explicit for both research and premium cells;
+   the premium rule below still pins desktop cards to the column width. */
+.card, .premium .card { width: 100%; }
 .card:hover { filter: brightness(1.12); }
 /* 点阵纹理(自底部渐隐) */
 .card::before {
@@ -291,22 +299,34 @@ main { flex: 1; display: flex; min-height: 0; }
   #classes { padding-top: 3px; }
 
   main { display: block; min-height: 0; }
-  #tree-wrap { overflow: visible; padding: 5px 6px 32px; }
-  #tree { width: 100%; min-width: 0; }
-  .band { display: grid; grid-template-columns: 30px minmax(0, 1fr); padding: 6px 0; }
+  /* Keep the real research columns in one horizontal strip.  A rank has the
+     same number of columns as every other rank; letting the grid auto-place
+     them into five tracks made column six wrap below column one on phones.
+     The strip can scroll horizontally while each rank remains aligned. */
+  #tree-wrap {
+    overflow-x: auto; overflow-y: visible;
+    width: 100%; max-width: 100vw;
+    padding: 5px 6px 32px;
+    overscroll-behavior-x: contain;
+  }
+  #tree { width: max-content; min-width: 100%; }
+  .band {
+    display: flex; width: max-content; min-width: 100%;
+    padding: 6px 0;
+  }
   .band:first-child { padding-top: 3px; }
   .rank-label { grid-column: 1; grid-row: 1 / span 2; width: 30px; margin-right: 0; font-size: 12px; }
   .research {
-    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
-    grid-column: 2; grid-row: 1; gap: 8px 4px; padding-right: 4px; min-width: 0; width: auto;
-    align-items: start;
+    flex: none; display: flex; width: max-content; min-width: 0;
+    gap: 6px; padding-right: 8px;
+    align-items: flex-start;
   }
-  .col { width: auto; min-width: 0; gap: 8px; }
+  .col { width: 78px; min-width: 78px; gap: 16px; }
   .premium {
-    grid-column: 2; grid-row: 2; width: auto; grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 8px 4px; padding: 6px 4px 0; min-width: 0;
+    flex: none; width: max-content; grid-template-columns: repeat(2, 78px);
+    gap: 8px 6px; padding: 6px 4px 0; min-width: 0;
   }
-  .card, .premium .card { width: 100%; min-width: 0; padding: 0 2px 2px; }
+  .card, .premium .card { width: 78px; min-width: 78px; padding: 0 2px 2px; }
   .card .ph { height: 29px; margin-top: 1px; padding-top: 1px; }
   .card .cname { gap: 1px; font-size: 8px; margin-top: 1px; height: 11px; }
   .card .cname .br { font-size: 7px; padding: 1px 2px; }
@@ -325,14 +345,6 @@ main { flex: 1; display: flex; min-height: 0; }
   #p-list { max-height: 34vh; overflow: auto; padding: 6px; }
   #p-foot { padding: 7px 9px; }
   #foot { padding: 5px 8px; }
-}
-
-@media (max-width: 360px) {
-  .research, .premium { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-}
-
-@media (max-width: 320px) {
-  .research, .premium { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 #tree-wrap::-webkit-scrollbar, #p-list::-webkit-scrollbar { width: 10px; height: 10px; }

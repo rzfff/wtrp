@@ -333,7 +333,10 @@
       const rects = cards.map(rectOf);
       const x = rects.reduce((sum, r) => sum + r.left + r.width / 2, 0) / rects.length - treeRect.left;
       const top = Math.min(...rects.map(r => r.top - treeRect.top)) - 2;
-      const bottom = Math.max(...rects.map(r => r.bottom - treeRect.top)) + 2;
+      // Stop the spine just inside the final card's lower edge.  The 3px
+      // stroke is centered on the path, so ending at the card boundary (or
+      // beyond it) leaves a tiny tail visible below the last card.
+      const bottom = Math.max(...rects.map(r => r.bottom - treeRect.top)) - 2;
       const spine = document.createElementNS(svgNS, "path");
       spine.setAttribute("d", `M ${x} ${top} V ${bottom}`);
       spine.setAttribute("fill", "none");
@@ -447,7 +450,13 @@
   function closeAllFolders() {
     if (state.openFolder == null) return;
     const prev = el.tree.querySelector('.folder[data-root="' + state.openFolder + '"]');
-    if (prev) prev.classList.remove("open");
+    if (prev) {
+      prev.classList.remove("open");
+      // .band is a stacking context (z-index:1) so the open panel must lift
+      // the whole band above the full-screen veil, not just the folder itself.
+      const band = prev.closest(".band");
+      if (band) band.classList.remove("folder-open");
+    }
     state.openFolder = null;
     el.veil.classList.remove("show");
   }
@@ -457,6 +466,8 @@
     if (state.openFolder === rootId) { closeAllFolders(); return; }
     closeAllFolders();
     folderEl_.classList.add("open");
+    const band = folderEl_.closest(".band");
+    if (band) band.classList.add("folder-open");
     state.openFolder = rootId;
     el.veil.classList.add("show");
   }
