@@ -95,6 +95,8 @@ check("分体防空发射车折叠随雷达车(线上数据)", byIdent["us_nasam
 check("发射车链价=雷达车链价", need("us_nasams_launcher").rp === need("us_nasams_fcs").rp, String(need("us_nasams_launcher").rp));
 { const pk = cat.nodes.find(n => n.availability === "pack" && n.ge_cost);
   check("礼包车名义 ge_cost 不计金鹰合计(v5.3 线上端到端)", pk && WTCalc.total(ix, [pk.id]).ge === 0, pk && pk.identifier); }
+{ const nf2 = byIdent["us_nasams_fcs"], nl2 = byIdent["us_nasams_launcher"];
+  check("组合单元银狮去重(主从同选=一次,v5.4 线上端到端)", WTCalc.total(ix, [nf2.id, nl2.id]).sl === nf2.sl_cost, `${WTCalc.total(ix, [nf2.id, nl2.id]).sl} vs ${nf2.sl_cost}`); }
 { const smp = cat.nodes.filter(n => n.availability === "researchable" && n.sl_cost);
   check("研究车带银狮购买价(v5.3)", smp.length > 2000, String(smp.length)); }
 

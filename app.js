@@ -86,8 +86,10 @@
   function brChip(n) {
     return n.br ? `<span class="br" title="战斗权重(分房)">${Number(n.br).toFixed(1)}</span>` : "";
   }
-  // 银狮购买价(vehicles-full value;研究车/联队车/部分市场·活动车有,金币·礼包车无)
+  // 银狮购买价(vehicles-full value;研究车/联队车/部分市场·活动车有,金币·礼包车无);
+  // 组合单元从属件(分体防空发射车)银狮随主件,不单列(v5.4)
   function slText(n) {
+    if (n.availability === "researchable" && !n.rp_cost && n.folder_of) return "银狮随主件";
     return n.sl_cost ? fmt(n.sl_cost) + " 银狮" : "";
   }
   function imgPh(n) {

@@ -60,17 +60,25 @@
   }
 
   /* 多选合计(v5.0 口径:仅所选载具自身,不含前置;v5.3:金鹰=仅金币车可金鹰购,
-     礼包/市场/联队的 ge_cost 是名义值不计;银狮=购买价,有则计)。
+     礼包/市场/联队的 ge_cost 是名义值不计;银狮=购买价,有则计;
+     v5.4:组合单元从属件(分体防空发射车:rp0+folder_of)银狮随主件计,主从同选只算一次)。
      返回 {rp, ge, sl, counted, per:[{id, added, addedGe, addedSl}]} */
   function total(ix, ids) {
     let rp = 0, ge = 0, sl = 0;
     const per = [], counted = [];
+    const slCounted = new Set();
     for (const id of ids) {
       const n = ix.byId.get(id);
       if (!n) continue;
       const added = n.availability === "researchable" ? (n.rp_cost || 0) : 0;
       const addedGe = n.availability === "premium" ? (n.ge_cost || 0) : 0;
-      const addedSl = n.sl_cost || 0;
+      let slNode = n;
+      if (n.availability === "researchable" && !n.rp_cost && n.folder_of) {
+        const root = ix.byId.get(n.folder_of);
+        if (root) slNode = root;
+      }
+      let addedSl = 0;
+      if (!slCounted.has(slNode.id)) { addedSl = slNode.sl_cost || 0; slCounted.add(slNode.id); }
       rp += added; ge += addedGe; sl += addedSl;
       counted.push(id);
       per.push({ id, added, addedGe, addedSl });
