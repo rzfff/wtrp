@@ -1,16 +1,17 @@
-/* /wtrp/ v5.2 —— 单页研发点计算器
+/* /wtrp/ v5.3 —— 单页研发点计算器
  * 设计语言参照 blind-thunder.wiki 的 wt-tree:游戏卡片质感(底色+顶部色条+点阵纹理),
  * 选中=色条变金+斜纹叠层;文件夹就地展开面板;
- * v5.2:卡片定宽 130px——1680 视口零横滚解(最宽 7 列树:9W+128≤1312);
- *       图区 62px/图上间隔 5px;字号随卡缩小(名 12/BR 10);
- * v5.1:卡片收回 190px、图区 88px+图上 7px 间隔
- * v5.0:合计口径改「仅所选载具,不含前置」(calc.js/app.js 侧);
- * v4.9:卡片加长(170→190px)、车名行右端=战斗权重 BR(分房,catalog 自带 realistic_br)、
- *       文件夹 +N 徽章挪到卡片右下角(原在名价行旁);
- * v4.8:金币区随内容收紧(max-content,不再顶到右栏)、
- *       缴获车名前缀=游戏原生国家旗标 SVG(flags/<国>.svg,datamine gameuiskin 提取);
- * v4.7:卡片定宽(换页不变)、列内间距统一(文件夹不再额外下挤)、面纱更轻可辨背景字。
+ * v5.3:名字图标=游戏符号字体 WTSymbols(自托管,与 bt 同源;名字保留原样前缀字符——
+ *       无色文字级与游戏一致,弃彩色旗标)/卡片+合计加银狮/金鹰仅金币车;
+ * v5.2:卡片 130px=1680 零横滚;v5.1:图上间隔;v5.0:合计=仅所选不含前置;
+ * v4.9:BR 徽标;v4.8:金币区 grid;v4.7:定宽/对齐/轻面纱。
  */
+/* 游戏符号字体(bt 同款:字体栈第一位,图标字符由它渲染,中文回退系统字体) */
+@font-face {
+  font-family: WTSymbols;
+  src: url(fonts/symbols_skyquake.ttf);
+  font-display: swap;
+}
 :root {
   --bg: #14191b;
   --panel: #1a2427;
@@ -35,7 +36,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 14px/1.45 "Microsoft YaHei", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+  font: 14px/1.45 WTSymbols, "Microsoft YaHei", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
   display: flex; flex-direction: column; overflow: hidden;
 }
 
@@ -135,15 +136,15 @@ main { flex: 1; display: flex; min-height: 0; }
   display: flex; align-items: center; gap: 3px;
   font-size: 12px; margin-top: 4px; height: 16px;
 }
-.card .cname .nm { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card .cname .nm { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: WTSymbols, "Microsoft YaHei", "PingFang SC", sans-serif; }
 /* 战斗权重(分房):车名行最右端小徽标(数据=catalog br,即 RB 分房) */
 .card .cname .br {
   flex: none; font-size: 10px; line-height: 1; font-weight: 700;
   padding: 1px 3px; border-radius: 3px;
   background: #00000059; color: #e8eef2;
 }
-/* 缴获/外国载具:名前游戏原生国家旗标(彩色小旗,与 blind-thunder 同款,v4.8) */
-.card .flg { height: 11px; width: auto; margin-right: 3px; border-radius: 1px; box-shadow: 0 0 0 1px #00000055; vertical-align: -1px; flex: none; }
+/* 银狮购买价行(v5.3;恒渲染保卡高统一,金币/礼包车无值为空) */
+.card .csl { font-size: 10px; line-height: 14px; height: 14px; color: #a8b8c2; white-space: nowrap; overflow: hidden; }
 .card .crp { font-size: 12px; }
 .card .crp { position: relative; font-size: 11px; color: #b8c6cf; margin-top: 1px; white-space: nowrap; }
 .card .tag {
@@ -242,13 +243,15 @@ main { flex: 1; display: flex; min-height: 0; }
 #p-list { flex: 1; overflow: auto; padding: 8px; }
 #p-foot { border-top: 1px solid var(--line); padding: 10px 12px; font-size: 13px; }
 #p-foot .big { font-size: 18px; font-weight: 700; color: #ffd77a; }
+#p-foot .big.slv { color: #c8d4dc; }
 #p-foot .row { display: flex; justify-content: space-between; margin: 2px 0; }
 #p-foot .note { color: var(--muted); font-size: 11px; margin-top: 4px; }
 
 .p-empty { color: var(--muted); text-align: center; padding: 30px 10px; font-size: 13px; }
 .prow { background: var(--panel2); border: 1px solid var(--line); border-radius: var(--radius); padding: 6px 8px; margin-bottom: 6px; }
 .prow .top { display: flex; align-items: center; gap: 6px; }
-.prow .pname { flex: 1; font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.prow .pname { flex: 1; font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: WTSymbols, "Microsoft YaHei", sans-serif; }
+.prow .psl { font-size: 11px; color: #a8b8c2; margin-top: 2px; }
 .prow .pcost { font-size: 12px; color: #ffd77a; white-space: nowrap; }
 .prow .pbtns { display: flex; gap: 4px; }
 .iconbtn {

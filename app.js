@@ -1,10 +1,9 @@
-/* /wtrp/ v5.0 —— 单页研发点计算器前端逻辑(CSP 安全:无内联脚本/样式,事件全委托)
+/* /wtrp/ v5.3 —— 单页研发点计算器前端逻辑(CSP 安全:无内联脚本/样式,事件全委托)
  * 依赖 calc.js 的 WTCalc。设计语言参照 blind-thunder.wiki wt-tree。
- * v5.0:合计口径=仅所选载具自身(不含前置,calc.js total() 改语义);卡片再加大加高。
- * v4.9:车名行右端=战斗权重 BR(分房;catalog br 字段,源自 vehicles-full realistic_br);
- *       文件夹 +N 徽章样式位置调整(右下角,CSS 侧)。
- * v4.8:缴获/外国载具名前=游戏原生国家旗标(flags/<nation>.svg,取自 datamine gameuiskin,
- *       与 blind-thunder 同款);兵种页签改名 远洋海军/近岸海军。
+ * v5.3:名字图标=游戏符号字体 WTSymbols 自托管(名字保留原样前缀字符,无色文字级,与游戏一致;
+ *       弃彩色旗标 SVG);卡片/合计显示银狮花费;金鹰合计仅金币车(礼包/市场/联队不可金鹰购)。
+ * v5.2:卡片 130px=1680 视口零横滚;v5.1:图上间隔;v5.0:合计口径=仅所选不含前置;
+ * v4.9:BR 分房徽标;v4.8:金币区 grid;海军=远洋海军/近岸海军。
  */
 (function () {
   "use strict";
@@ -83,13 +82,13 @@
       default: return "活动/绝版";
     }
   }
-  // 缴获/外国载具:名前挂游戏原生国家旗标(与 blind-thunder 同款;catalog captured 标记)
-  function flgImg(n) {
-    return n.captured ? `<img class="flg" src="flags/${n.nation}.svg" alt="">` : "";
-  }
   // 战斗权重(分房)徽标:RB 分房,catalog br 全量在册(3288/3288);无值不渲染(防御)
   function brChip(n) {
     return n.br ? `<span class="br" title="战斗权重(分房)">${Number(n.br).toFixed(1)}</span>` : "";
+  }
+  // 银狮购买价(vehicles-full value;研究车/联队车/部分市场·活动车有,金币·礼包车无)
+  function slText(n) {
+    return n.sl_cost ? fmt(n.sl_cost) + " 银狮" : "";
   }
   function imgPh(n) {
     if (!n.image) return `<div class="ph noimg">${CLS_ICON[n.class] || "?"}</div>`;
@@ -233,7 +232,7 @@
     d.dataset.id = n.id;
     d.dataset.name = n.name.toLowerCase();
     const tag = n.availability !== "researchable" ? `<span class="tag">${AVAIL_ZH[n.availability] || "特殊"}</span>` : "";
-    d.innerHTML = `${tag}${imgPh(n)}<div class="cname">${flgImg(n)}<span class="nm" title="${esc(n.name)}">${esc(n.name)}</span>${brChip(n)}</div><div class="crp">${costText(n)}</div><div class="selmark">✓</div>`;
+    d.innerHTML = `${tag}${imgPh(n)}<div class="cname"><span class="nm" title="${esc(n.name)}">${esc(n.name)}</span>${brChip(n)}</div><div class="crp">${costText(n)}</div><div class="csl">${slText(n)}</div><div class="selmark">✓</div>`;
     return d;
   }
 
@@ -349,13 +348,14 @@
       const exp = state.expanded.has(id);
       row.innerHTML = `
         <div class="top">
-          ${tag}<span class="pname" title="${esc(n.name)}">${flgImg(n)}${esc(n.name)}</span>
+          ${tag}<span class="pname" title="${esc(n.name)}">${esc(n.name)}</span>
           <span class="pcost">${costText(n)}</span>
           <span class="pbtns">
             <button type="button" class="iconbtn" data-act="chain">${exp ? "▾ 链" : "▸ 链"}</button>
             <button type="button" class="iconbtn" data-act="rm">✕</button>
           </span>
-        </div>`;
+        </div>
+        ${n.sl_cost ? `<div class="psl">${slText(n)}</div>` : ""}`;
       row.querySelector('[data-act="rm"]').addEventListener("click", () => {
         state.selected.delete(id); state.expanded.delete(id); afterSelectionChange();
       });
@@ -372,7 +372,8 @@
     const t = WTCalc.total(state.ix, ids);
     el.pFoot.innerHTML = `
       <div class="row"><span>研发点合计(仅所选载具,不含前置)</span><span class="big">${fmt(t.rp)}</span></div>
-      ${t.ge ? `<div class="row"><span>金鹰合计(高级载具)</span><span class="big">${fmt(t.ge)}</span></div>` : ""}
+      ${t.ge ? `<div class="row"><span>金鹰合计(仅金币载具)</span><span class="big">${fmt(t.ge)}</span></div>` : ""}
+      ${t.sl ? `<div class="row"><span>银狮合计(购买价)</span><span class="big slv">${fmt(t.sl)}</span></div>` : ""}
       <div class="note">共 ${ids.length} 辆;单辆的完整研发链(含前置)点「链」查看</div>`;
   }
 
@@ -382,7 +383,9 @@
     const box = document.createElement("div");
     box.className = "chain";
     if (n.availability !== "researchable") {
-      box.innerHTML = `<div class="cnode">高级/活动载具:不可用研发点研发${n.ge_cost ? ",需 " + fmt(n.ge_cost) + " 金鹰" : ""}</div>`;
+      const buy = n.availability === "premium" && n.ge_cost
+        ? `,需 ${fmt(n.ge_cost)} 金鹰` : "";
+      box.innerHTML = `<div class="cnode">高级/活动载具:不可用研发点研发${buy}</div>`;
       return box;
     }
     if (c.path.length <= 1) {

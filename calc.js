@@ -59,21 +59,23 @@
     return cost(id);
   }
 
-  /* 多选合计(v5.0 口径:仅所选载具自身的研发点/金鹰,不含前置——用户验收:
-     "选了哪几个载具就算哪几个的合计")。返回 {rp, ge, counted, per:[{id, added, addedGe}]} */
+  /* 多选合计(v5.0 口径:仅所选载具自身,不含前置;v5.3:金鹰=仅金币车可金鹰购,
+     礼包/市场/联队的 ge_cost 是名义值不计;银狮=购买价,有则计)。
+     返回 {rp, ge, sl, counted, per:[{id, added, addedGe, addedSl}]} */
   function total(ix, ids) {
-    let rp = 0, ge = 0;
+    let rp = 0, ge = 0, sl = 0;
     const per = [], counted = [];
     for (const id of ids) {
       const n = ix.byId.get(id);
       if (!n) continue;
       const added = n.availability === "researchable" ? (n.rp_cost || 0) : 0;
-      const addedGe = n.availability !== "researchable" ? (n.ge_cost || 0) : 0;
-      rp += added; ge += addedGe;
+      const addedGe = n.availability === "premium" ? (n.ge_cost || 0) : 0;
+      const addedSl = n.sl_cost || 0;
+      rp += added; ge += addedGe; sl += addedSl;
       counted.push(id);
-      per.push({ id, added, addedGe });
+      per.push({ id, added, addedGe, addedSl });
     }
-    return { rp, ge, counted, per };
+    return { rp, ge, sl, counted, per };
   }
 
   return { buildIndex, need, total };

@@ -40,8 +40,9 @@ EFFICIENCY = {
     "target_above": {"0": 1.0, "1": 1.0, "2": 0.4, "3": 0.3}, "target_above_default": 0.2,
     "target_below": {"1": 0.9, "2": 0.3, "3": 0.1}, "target_below_default": 0.05,
 }
-BLOCK_CHARS = re.compile(r"[▀-▟]")
-JUNK_CHARS = re.compile(r"[\u0000-\u001F\u2580-\u259F\u2419\u2421]")
+# v5.3:名字保留游戏图标前缀原样(块字符+控制图符+几何图形+私用区,前端 WTSymbols 字体渲染),只剥控制字符
+ICON_CHARS = re.compile(r"[\u2580-\u259F\u2417\u2419\u2420\u2421\u25A0-\u25FF\uF059]")
+JUNK_CHARS = re.compile(r"[\u0000-\u001F\u007F]")
 
 
 def clean(s):
@@ -79,7 +80,7 @@ def main():
                 ident = e["id"]
                 v = veh.get(ident)
                 raw = names.get(ident.lower()) or ident.replace("_", " ")
-                captured = bool(raw and BLOCK_CHARS.search(raw))
+                captured = bool(raw and ICON_CHARS.search(raw))
                 disp = clean(raw)
                 if disp != raw:
                     stats["cleaned"] += 1
@@ -108,6 +109,7 @@ def main():
                     "folder_of": None,
                     "rp_cost": rp_cost,
                     "ge_cost": (v.get("ge_cost") or None) if v else None,
+                    "sl_cost": (v.get("value") or None) if v else None,
                     "is_reserve": bool(researchable and not rp_cost),
                 }
                 if v and v.get("realistic_br"):

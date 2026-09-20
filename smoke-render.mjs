@@ -39,6 +39,7 @@ for (const sel of [".folder .fstack", ".folder.open .folding-panel", ".card .ph 
 }
 // v5.2:卡宽 130(1680 零横滚解)/图区 62+图上间隔 5px / 车名行右端 BR 徽标
 check("style.css v5.2 图片区 --img-h:62px+图上间隔 padding-top:5px", css.includes("--img-h: 62px") && css.includes("padding-top: 5px"));
+check("style.css v5.3 @font-face WTSymbols+银狮行+无旗标", css.includes("@font-face") && css.includes("WTSymbols") && css.includes(".card .csl") && !css.includes(".flg"));
 check("style.css v5.2 卡片全站定宽 130px", css.includes(".col { flex: none; width: 130px") && !css.includes("repeat(2, 190px)"));
 check("style.css v5.0 金币区 max-content(右缘空隙消除)", css.includes("width: max-content"));
 check("style.css v4.9 车名行 flex+.nm+.br 徽标", css.includes(".cname .nm") && css.includes(".cname .br"));
@@ -148,10 +149,10 @@ check("发射车标组合单元", !!(lchCard && lchCard.textContent.includes("�
 // v4.9:每张卡 BR 徽标(数字带一位小数)在车名行右端;+N 徽章仍在
 const withBr = $$("#tree .card .cname .br").filter(b => /^\d+\.\d$/.test(b.textContent));
 check("卡片 BR 徽标渲染且格式 n.n", withBr.length >= 100, String(withBr.length));
+check("卡片银狮行渲染(v5.3,研究卡带银狮价)", $$("#tree .card .csl").filter(c => /银狮/.test(c.textContent)).length >= 100, String($$("#tree .card .csl").filter(c => /银狮/.test(c.textContent)).length));
 check("BR 徽标在 .cname 内(车名行右端)", withBr.every(b => !!b.closest(".cname")));
 const capCard = $$("#tree .card").find(c => (c.dataset.name || "").includes("斯图亚特 vi"));
-check("缴获载具名前渲染旗标 img.flg[src*=flags/]", !!capCard && !!capCard.querySelector('.cname img.flg[src*="flags/"]'),
-  capCard ? (capCard.querySelector("img.flg") ? capCard.querySelector("img.flg").getAttribute("src") : "无 flg") : "未渲染");
+check("名字图标=原样字符(无 img 旗标,v5.3 字体方案)", !!capCard && /[\u2580-\u25FF\u2417]/.test(capCard.dataset.name || ""), capCard ? capCard.dataset.name.slice(0, 12) : "未渲染");
 check("兵种页签=远洋海军/近岸海军(v4.8 改名)", $("#classes").textContent.includes("远洋海军") && $("#classes").textContent.includes("近岸海军"));
 
 console.log(bad === 0 ? "\n渲染冒烟全部通过 ✅(" + (LIVE ? "线上" : "本地") + ")" : `\n${bad} 项未通过 ❌`);
