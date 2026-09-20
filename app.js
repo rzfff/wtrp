@@ -1,4 +1,4 @@
-/* /wtrp/ v5.7 —— 单页研发点计算器前端逻辑(CSP 安全:无内联脚本/样式,事件全委托)
+/* /wtrp/ v5.10 —— 单页研发点计算器前端逻辑(CSP 安全:无内联脚本/样式,事件全委托)
  * 依赖 calc.js 的 WTCalc。设计语言参照 blind-thunder.wiki wt-tree。
  * v5.3:名字图标=游戏符号字体 WTSymbols 自托管(名字保留原样前缀字符,无色文字级,与游戏一致;
  *       弃彩色旗标 SVG);卡片/合计显示银狮花费;金鹰合计仅金币车(礼包/市场/联队不可金鹰购)。
@@ -334,7 +334,11 @@
     for (const cards of lanes.values()) {
       const rects = cards.map(rectOf);
       const x = rects.reduce((sum, r) => sum + r.left + r.width / 2, 0) / rects.length - treeRect.left;
-      const top = Math.min(...rects.map(r => r.top - treeRect.top)) - 2;
+      // Start the spine inside the first card.  The connector SVG sits below
+      // the cards, but a stroke still extends half its width beyond the path;
+      // starting above the card therefore leaves a stray line at the very top
+      // of every lane (most visible on the first card in the tree).
+      const top = Math.min(...rects.map(r => r.top - treeRect.top)) + 4;
       // Stop the spine just inside the final card's lower edge.  The 3px
       // stroke is centered on the path, so ending at the card boundary (or
       // beyond it) leaves a tiny tail visible below the last card.
