@@ -22,6 +22,7 @@
     search: "",
     needCache: new Map(),
     openFolder: null, // 当前展开的文件夹根 id(一次一个,blind-thunder 同款)
+    treeNodes: [],
     connectorObserver: null,
     connectorRefresh: 0,
   };
@@ -42,7 +43,11 @@
     loadSelected();
     buildNationTabs();
     buildClassTabs();
-    el.search.addEventListener("input", () => { state.search = el.search.value.trim().toLowerCase(); applySearch(); });
+    el.search.addEventListener("input", () => {
+      state.search = el.search.value.trim().toLowerCase();
+      applySearch();
+      renderTreeConnectors(state.treeNodes);
+    });
     el.pClear.addEventListener("click", clearAll);
     el.tree.addEventListener("click", onTreeClick);
     // 图片加载失败 → 占位符(捕获阶段,替代被 CSP 禁用的内联 onerror)
@@ -159,6 +164,7 @@
   function renderTree() {
     closeAllFolders();
     const nodes = state.catalog.nodes.filter(n => n.nation === state.nation && n.class === state.cls);
+    state.treeNodes = nodes;
     const tree = state.catalog.trees.find(t => t.nation === state.nation && t.class === state.cls);
     const colCount = tree ? tree.research_column_count : 1;
     const ranks = [...new Set(nodes.map(n => n.rank))].sort((a, b) => a - b);
@@ -214,8 +220,8 @@
     // 恢复展开状态无意义(面纱交互一次一个),渲染前先收干净
     el.tree.innerHTML = "";
     el.tree.appendChild(frag);
-    renderTreeConnectors(nodes);
     applySearch();
+    renderTreeConnectors(nodes);
   }
 
   // 研发顺序提示：独立 SVG 叠层负责连线，卡片位于其上方。
@@ -254,7 +260,9 @@
 
     const visibleCards = new Map();
     el.tree.querySelectorAll(":scope > .band .card[data-id]").forEach(card => {
-      if (!card.closest(".folding-panel")) visibleCards.set(Number(card.dataset.id), card);
+      if (!card.closest(".folding-panel") && !card.closest(".hide")) {
+        visibleCards.set(Number(card.dataset.id), card);
+      }
     });
     const edges = [];
     const seen = new Set();
@@ -310,7 +318,8 @@
     // 每条研究列先画一根贯穿科技树的主干。卡片层级更高，会自然把主干在卡片处遮断。
     const lanes = new Map();
     el.tree.querySelectorAll(":scope > .band .col").forEach(col => {
-      const cards = [...col.querySelectorAll(":scope > .card, :scope > .folder > .fstack > .card")];
+      const cards = [...col.querySelectorAll(":scope > .card, :scope > .folder > .fstack > .card")]
+        .filter(card => !card.closest(".hide"));
       if (!cards.length) return;
       // 用布局后的实际中心点分组，而不是只看原始 tree_column。
       // 手机端列数会减少，超出的研究列会换到下一行；此时它们应继续
