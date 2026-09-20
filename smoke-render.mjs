@@ -37,9 +37,9 @@ check("style.css 花括号配平", openB === closeB, `${openB}/${closeB}`);
 for (const sel of [".folder .fstack", ".folder.open .folding-panel", ".card .ph img", ".research", ".premium", ".folder .fshell", "#veil"]) {
   check("style.css 含选择器 " + sel, css.includes(sel));
 }
-// v5.0:图区 92 / 卡片 210 / 车名行右端 BR 徽标 / 徽章右下角
-check("style.css v5.0 图片区 --img-h:92px", css.includes("--img-h: 92px"));
-check("style.css v5.0 卡片全站定宽 210px", css.includes("width: 210px") && !css.includes("width: 190px"));
+// v5.1:图区 88+图上间隔 7px / 卡片 190 / 车名行右端 BR 徽标 / 徽章右下角
+check("style.css v5.1 图片区 --img-h:88px+图上间隔 padding-top:7px", css.includes("--img-h: 88px") && css.includes("padding-top: 7px"));
+check("style.css v5.1 卡片全站定宽 190px", css.includes(".col { flex: none; width: 190px") && !css.includes("repeat(2, 210px)"));
 check("style.css v5.0 金币区 max-content(右缘空隙消除)", css.includes("width: max-content"));
 check("style.css v4.9 车名行 flex+.nm+.br 徽标", css.includes(".cname .nm") && css.includes(".cname .br"));
 check("style.css v4.9 +N 徽章右下角(bottom:2px)", /cbadge[^}]*bottom: 2px/.test(css));
