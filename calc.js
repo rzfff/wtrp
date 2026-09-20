@@ -78,7 +78,11 @@
         if (root) slNode = root;
       }
       let addedSl = 0;
-      if (!slCounted.has(slNode.id)) { addedSl = slNode.sl_cost || 0; slCounted.add(slNode.id); }
+      // 活动车没有银狮购买价；即使旧目录带有 value，也不能计入合计。
+      if (slNode.availability !== "event" && !slCounted.has(slNode.id)) {
+        addedSl = slNode.sl_cost || 0;
+        slCounted.add(slNode.id);
+      }
       rp += added; ge += addedGe; sl += addedSl;
       counted.push(id);
       per.push({ id, added, addedGe, addedSl });

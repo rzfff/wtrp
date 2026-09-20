@@ -109,7 +109,10 @@ def main():
                     "folder_of": None,
                     "rp_cost": rp_cost,
                     "ge_cost": (v.get("ge_cost") or None) if v else None,
-                    "sl_cost": (v.get("value") or None) if v else None,
+                    # 活动车是活动/兑换取得，游戏不会显示可购买的银狮价格；
+                    # vehicles-full.value 对这类车仍可能有数值（通常是旧经济数据），
+                    # 不能把它误当成银狮购买价写入目录。
+                    "sl_cost": (v.get("value") or None) if v and e["type"] != "event" else None,
                     "is_reserve": bool(researchable and not rp_cost),
                 }
                 if v and v.get("realistic_br"):

@@ -96,6 +96,8 @@
   // 银狮购买价(vehicles-full value;研究车/联队车/部分市场·活动车有,金币·礼包车无);
   // 组合单元从属件(分体防空发射车)银狮随主件,不单列(v5.4)
   function slText(n) {
+    // 活动车没有银狮购买价，即使旧目录残留 value 也不应渲染。
+    if (n.availability === "event") return "";
     if (n.availability === "researchable" && !n.rp_cost && n.folder_of) return "银狮随主件";
     return n.sl_cost ? fmt(n.sl_cost) + " 银狮" : "";
   }
@@ -542,7 +544,7 @@
             <button type="button" class="iconbtn" data-act="rm">✕</button>
           </span>
         </div>
-        ${n.sl_cost ? `<div class="psl">${slText(n)}</div>` : ""}`;
+        ${slText(n) ? `<div class="psl">${slText(n)}</div>` : ""}`;
       row.querySelector('[data-act="rm"]').addEventListener("click", () => {
         state.selected.delete(id); state.expanded.delete(id); afterSelectionChange();
       });
