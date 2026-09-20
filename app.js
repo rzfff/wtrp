@@ -233,7 +233,7 @@
     d.dataset.id = n.id;
     d.dataset.name = n.name.toLowerCase();
     const tag = n.availability !== "researchable" ? `<span class="tag">${AVAIL_ZH[n.availability] || "特殊"}</span>` : "";
-    d.innerHTML = `${tag}${imgPh(n)}<div class="cname">${flgImg(n)}<span class="nm">${esc(n.name)}</span>${brChip(n)}</div><div class="crp">${costText(n)}</div><div class="selmark">✓</div>`;
+    d.innerHTML = `${tag}${imgPh(n)}<div class="cname">${flgImg(n)}<span class="nm" title="${esc(n.name)}">${esc(n.name)}</span>${brChip(n)}</div><div class="crp">${costText(n)}</div><div class="selmark">✓</div>`;
     return d;
   }
 

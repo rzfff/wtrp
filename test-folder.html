@@ -75,6 +75,9 @@
           for (let i = 1; i < rect.length; i++) colGaps.add(Math.round(rect[i].top - rect[i - 1].bottom));
         }
         g.colGaps = [...colGaps];
+        // v5.2:横向溢出验收——科技树区 scrollWidth 不得超出 clientWidth(0=无横滚)
+        const wrap = document.getElementById("tree-wrap");
+        g.hOverflow = wrap ? wrap.scrollWidth - wrap.clientWidth : null;
         const out = document.createElement("div");
         out.id = "geom";
         out.textContent = "GEOM=" + JSON.stringify(g);
