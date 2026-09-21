@@ -1,6 +1,6 @@
 # WT 研发点计算器(/wtrp/)
 
-单页静态应用:游戏布局的科技树 + 研发点计算。数据来自本站 `/wtapi/` 管线(war-thunder-datamine 2.59.0.13)。
+单页静态应用:游戏布局的科技树 + 研发点计算。数据来自本站 `/wtapi/` 管线(war-thunder-datamine 2.59.0.19)。
 
 在线:https://anhappy.com/wtrp/
 

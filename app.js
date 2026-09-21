@@ -64,6 +64,14 @@
     // 面纱(blind-thunder public_mask 同款):开文件夹时压暗整树,点面纱收起
     el.veil.addEventListener("click", closeAllFolders);
     document.addEventListener("keydown", e => { if (e.key === "Escape") closeAllFolders(); });
+    // Keep an opened stack readable after a viewport/rotation change.  The
+    // folder's panel is flipped upward when its natural bottom would be
+    // clipped by the tree viewport (or the phone viewport).
+    window.addEventListener("resize", () => {
+      if (state.openFolder == null) return;
+      const folder = el.tree.querySelector('.folder[data-root="' + state.openFolder + '"]');
+      if (folder) fitFolderPanel(folder);
+    });
     window.addEventListener("hashchange", () => { loadHash(); buildClassTabs(); renderTree(); });
     renderTree();
     renderPanel();
@@ -476,6 +484,26 @@
     if (band) band.classList.add("folder-open");
     state.openFolder = rootId;
     el.veil.classList.add("show");
+    fitFolderPanel(folderEl_);
+  }
+
+  function fitFolderPanel(folder) {
+    const panel = folder && folder.querySelector(".folding-panel");
+    if (!panel || !folder.classList.contains("open")) return;
+    // Measure the default downward panel first.  On desktop the scrollable
+    // tree is the clipping viewport; on phones the page viewport is the
+    // useful boundary because the tree itself intentionally allows vertical
+    // flow while its contents scroll horizontally.
+    folder.classList.remove("fold-up");
+    const panelRect = panel.getBoundingClientRect();
+    const treeRect = el.treeWrap.getBoundingClientRect();
+    const isPhone = window.matchMedia && window.matchMedia("(max-width: 600px)").matches;
+    const clipTop = isPhone ? 0 : treeRect.top;
+    const clipBottom = isPhone ? window.innerHeight : treeRect.bottom;
+    const margin = 8;
+    if (panelRect.bottom > clipBottom - margin && panelRect.top > clipTop + margin) {
+      folder.classList.add("fold-up");
+    }
   }
 
   /* ---------- 交互 ---------- */
