@@ -62,7 +62,7 @@ check("catalog 缴获标记 captured(515,图标=名字原样字符)", c.body.inc
 check("catalog 名字保留图标前缀字符(v5.3,字体渲染)", /\u2580|\u2417|\u25D4/.test(c.body) && c.body.includes('"sl_cost"'));
 check("catalog 含分区标记", c.body.includes('"zone":"research"') && c.body.includes('"zone":"premium"'));
 const cat = JSON.parse(c.body);
-check("版本 2.59.0.19", cat.source.version === "2.59.0.19");
+check("版本 2.59.0.22", cat.source.version === "2.59.0.22");
 check("规模 节点≥3250/边≥2650/树44", cat.nodes.length >= 3250 && cat.edges.length >= 2650 && cat.trees.length === 44,
   `${cat.nodes.length}/${cat.edges.length}/${cat.trees.length}`);
 check("节点 zone⟺availability", cat.nodes.every(n => (n.zone === "research") === (n.availability === "researchable")));
