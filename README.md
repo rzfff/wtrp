@@ -1,6 +1,6 @@
 # WT 研发点计算器(/wtrp/)
 
-单页静态应用:游戏布局的科技树 + 研发点计算。数据来自本站 `/wtapi/` 管线(war-thunder-datamine 2.59.0.19)。
+单页静态应用:游戏布局的科技树 + 研发点计算。数据来自本站 `/wtapi/` 管线(war-thunder-datamine 2.59.0.92)。
 
 在线:https://anhappy.com/wtrp/
 
@@ -17,7 +17,7 @@
 |---|---|
 | `index.html` `style.css` `app.js` | 前端三件套 |
 | `calc.js` | 研发链计算核心(浏览器 `window.WTCalc` / Node `require` 双兼容) |
-| `data/catalog.json` | 唯一运行时数据(3288 节点 / 2710 边 / 44 树,schema_version 1) |
+| `data/catalog.json` | 唯一运行时数据(3297 节点 / 2710 边 / 44 树,schema_version 1) |
 | `flags/*.svg` | 缴获/外国载具名前的国家旗标(游戏 datamine 原生 SVG) |
 | `data/ttm/c_*.json` | 中间产物(gen_data.py 输出,shop.blkx 列序/文件夹) |
 | `gen_data.py` | datamine `shop.blkx` → 每国列序数据(含 `showOnlyWhenBought` 右区标记) |
