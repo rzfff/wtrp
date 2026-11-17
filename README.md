@@ -17,7 +17,7 @@
 |---|---|
 | `index.html` `style.css` `app.js` | 前端三件套 |
 | `calc.js` | 研发链计算核心(浏览器 `window.WTCalc` / Node `require` 双兼容) |
-| `data/catalog.json` | 唯一运行时数据(3332 节点 / 2738 边 / 44 树,schema_version 1) |
+| `data/catalog.json` | 唯一运行时数据(3334 节点 / 2738 边 / 44 树,schema_version 1) |
 | `fonts/symbols_skyquake.ttf` | WTSymbols 游戏符号字体(缴获/外国载具名前缀渲染,自托管;v4.8 旗标 SVG 方案已弃,flags/ 已删) |
 | `data/ttm/c_*.json` | 中间产物(gen_data.py 输出,shop.blkx 列序/文件夹) |
 | `gen_data.py` | datamine `shop.blkx` → 每国列序数据(含 `showOnlyWhenBought` 右区标记) |
