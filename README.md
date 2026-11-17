@@ -1,6 +1,6 @@
 # WT 研发点计算器(/wtrp/)
 
-单页静态应用:游戏布局的科技树 + 研发点计算。数据来自本站 `/wtapi/` 管线(war-thunder-datamine 2.60.0.21)。
+单页静态应用:游戏布局的科技树 + 研发点计算。数据来自本站 `/wtapi/` 管线(war-thunder-datamine 2.61.0.17)。
 
 在线:https://anhappy.com/wtrp/
 
@@ -17,12 +17,12 @@
 |---|---|
 | `index.html` `style.css` `app.js` | 前端三件套 |
 | `calc.js` | 研发链计算核心(浏览器 `window.WTCalc` / Node `require` 双兼容) |
-| `data/catalog.json` | 唯一运行时数据(3331 节点 / 2737 边 / 44 树,schema_version 1) |
-| `flags/*.svg` | 缴获/外国载具名前的国家旗标(游戏 datamine 原生 SVG) |
+| `data/catalog.json` | 唯一运行时数据(3332 节点 / 2738 边 / 44 树,schema_version 1) |
+| `fonts/symbols_skyquake.ttf` | WTSymbols 游戏符号字体(缴获/外国载具名前缀渲染,自托管;v4.8 旗标 SVG 方案已弃,flags/ 已删) |
 | `data/ttm/c_*.json` | 中间产物(gen_data.py 输出,shop.blkx 列序/文件夹) |
 | `gen_data.py` | datamine `shop.blkx` → 每国列序数据(含 `showOnlyWhenBought` 右区标记) |
 | `gen_catalog.py` | 合并 vehicles-full + 简中名 + 图清单 → catalog.json(清块字符/缺图置空/文件夹任选连边) |
-| `validate-data.mjs` | 离线数据+计算断言(29 项,`node validate-data.mjs`) |
+| `validate-data.mjs` | 离线数据+计算断言(35 项,`node validate-data.mjs`) |
 | `check-wtrp.mjs` | 线上端到端验收(49 项,`node check-wtrp.mjs`) |
 | `smoke-render.mjs` | 渲染级冒烟(43 项,jsdom 真跑页面;`node smoke-render.mjs [--live]`,需 devDependency jsdom@22) |
 | `test-folder.html` | 截图验证工具:自动点开第一个文件夹(上传服务器同目录→无头 Chrome 截图→删) |
@@ -32,14 +32,14 @@
 1. wtapi 管线换版(`E:\ah\wtapi-build\`,datamine pull → 提取 → 导出)。
 2. `PYTHONIOENCODING=utf-8 python gen_data.py && python gen_catalog.py`
 3. `node validate-data.mjs` 全绿。
-4. 打包 `index.html style.css app.js calc.js data/catalog.json` 上服务器 `/opt/services/wtrp/`。
+4. 打包 `index.html style.css app.js calc.js data/catalog.json fonts/symbols_skyquake.ttf favicon.ico` 上服务器 `/opt/services/wtrp/`(纯换戳轮只需 `data/catalog.json` + `data/ttm/` 两处);**git 推送 = 本地 `git bundle` → scp → 服务器 /root/wtrp-mirror fetch + push**(本机无 GitHub 直连)。
 5. 前端有改动先 bump index.html 里三件套引用的 `?v=` 版本号(防浏览器 30 天缓存毒化;nginx /wtrp/ 已固定 no-cache 双保险),`node check-wtrp.mjs` + `node smoke-render.mjs --live` 全绿。
 
 ## 数据要点(踩坑记录)
 
 - **右区判定**:datamine 的 premium 标志不全(一战车/杯赛车/promo 全漏),权威信号是 `shop.blkx` 条目的 `showOnlyWhenBought`;有 `ge_cost` 归金币、否则归活动。
 - **文件夹语义**:组成员的前置 = 组根的前置(游戏"任选其一"),后继车向组内每辆连边,计算取 min。
-- **名字清洗**:names-zh 含游戏"缴获"标记(▀▅▄▃▂ U+2580-259F),生成时剥除。
+- **缴获标记**:names-zh 含游戏缴获标记字符(块字符 ▀▅▄▃▂ + ␗◔◄ 等控制图符),生成时**保留原样**并以 ICON_CHARS 名单打 `captured` 标;前端用自托管 WTSymbols 字体渲染成图标(v5.3 起;旧「生成时剥除」方案已废)。
 - **shop.blkx 脏键**:`reqAir`/`rank`/`slaveUnit` 等配置键混在载具列里,按 vehicles-full 名单过滤。
 - **锚点按列隔离**:跨列不连边(每列顶部是各等级 I 级起点,无前置)。
 
