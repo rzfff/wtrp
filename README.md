@@ -23,8 +23,8 @@
 | `gen_data.py` | datamine `shop.blkx` → 每国列序数据(含 `showOnlyWhenBought` 右区标记) |
 | `gen_catalog.py` | 合并 vehicles-full + 简中名 + 图清单 → catalog.json(清块字符/缺图置空/文件夹任选连边) |
 | `validate-data.mjs` | 离线数据+计算断言(35 项,`node validate-data.mjs`) |
-| `check-wtrp.mjs` | 线上端到端验收(49 项,`node check-wtrp.mjs`) |
-| `smoke-render.mjs` | 渲染级冒烟(43 项,jsdom 真跑页面;`node smoke-render.mjs [--live]`,需 devDependency jsdom@22) |
+| `check-wtrp.mjs` | 线上端到端验收(54 项,`node check-wtrp.mjs`) |
+| `smoke-render.mjs` | 渲染级冒烟(49 项,jsdom 真跑页面;`node smoke-render.mjs [--live]`,需 devDependency jsdom@22) |
 | `test-folder.html` | 截图验证工具:自动点开第一个文件夹(上传服务器同目录→无头 Chrome 截图→删) |
 
 ## 更新流程(WT 大版本)
